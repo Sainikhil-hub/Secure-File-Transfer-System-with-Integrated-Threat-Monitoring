@@ -1,0 +1,1022 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>CipherDrop — Enterprise Secure File Transfer & Threat Monitoring</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['Inter', 'sans-serif'],
+            mono: ['JetBrains Mono', 'monospace'],
+          },
+          colors: {
+            brand: {
+              50: '#eff6ff',
+              100: '#dbeafe',
+              200: '#bfdbfe',
+              500: '#3b82f6',
+              600: '#2563eb',
+              700: '#1d4ed8',
+              800: '#1e40af',
+              900: '#1e3a8a'
+            }
+          }
+        }
+      }
+    }
+  </script>
+  <link rel="stylesheet" href="/css/style.css">
+</head>
+<body class="min-h-screen flex flex-col bg-slate-50 text-slate-800 antialiased selection:bg-blue-600 selection:text-white">
+
+  <!-- ================= TOP FLOATING CURVED ISLAND NAVIGATION BAR ================= -->
+  <header class="sticky top-2 sm:top-4 z-50 px-3 sm:px-6 lg:px-8 max-w-7xl mx-auto w-full transition-all duration-300">
+    <div class="glass-island px-4 sm:px-5 py-2.5 rounded-2xl sm:rounded-full flex items-center justify-between gap-3 relative overflow-hidden">
+      
+      <!-- Brand Logo with Curved Gradient Icon -->
+      <div class="flex items-center space-x-2.5 cursor-pointer group flex-shrink-0" onclick="app.handleLogoClick()">
+        <div class="w-9 h-9 rounded-full bg-gradient-to-tr from-blue-700 via-blue-600 to-indigo-500 flex items-center justify-center text-white shadow-md shadow-blue-500/25 group-hover:scale-105 transition-transform duration-200">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/>
+          </svg>
+        </div>
+        <div class="flex flex-col">
+          <span class="font-extrabold text-base sm:text-lg tracking-tight text-slate-900 group-hover:text-blue-600 transition-colors leading-none">CipherDrop</span>
+          <span class="text-[10px] text-slate-400 font-medium hidden sm:block mt-1 leading-none">Secure Transfer</span>
+        </div>
+      </div>
+
+      <!-- Center: Desktop Navigation Tabs (Visible only when logged in via JS) -->
+      <nav id="mainNav" class="hidden items-center space-x-1 bg-slate-100/80 p-1 rounded-full border border-slate-200/80 flex-shrink-0 min-w-0">
+        <button onclick="app.navigate('upload')" id="nav-upload" class="nav-tab px-3 py-1.5 rounded-full text-xs font-semibold whitespace-nowrap text-blue-600 bg-white shadow-sm transition">
+          Send Files
+        </button>
+        <button onclick="app.navigate('transfers')" id="nav-transfers" class="nav-tab px-3 py-1.5 rounded-full text-xs font-medium whitespace-nowrap text-slate-600 hover:text-slate-900 hover:bg-white/60 transition">
+          My Transfers
+        </button>
+        <button onclick="app.navigate('admin')" id="nav-admin" class="nav-tab hidden px-3 py-1.5 rounded-full text-xs font-medium whitespace-nowrap text-slate-600 hover:text-slate-900 hover:bg-white/60 transition items-center space-x-1.5">
+          <span>Threat Center</span>
+          <span class="text-[9px] uppercase font-bold bg-amber-500 text-white px-1.5 py-0.5 rounded-full leading-none">Admin</span>
+        </button>
+        <button onclick="app.navigate('guide')" id="nav-guide" class="nav-tab px-3 py-1.5 rounded-full text-xs font-medium whitespace-nowrap text-slate-600 hover:text-slate-900 hover:bg-white/60 transition hidden lg:inline-flex">
+          Security Guide
+        </button>
+      </nav>
+
+      <!-- Right Action Items — controlled entirely by JS, hidden by default -->
+      <div id="desktopRightBar" class="hidden items-center space-x-2 flex-shrink-0">
+        <!-- Live Threat Beacon Status -->
+        <div id="liveMonitorStatus" class="hidden xl:flex items-center space-x-1.5 px-3 py-1 rounded-full text-xs font-medium bg-emerald-50 text-emerald-700 border border-emerald-200/80 shadow-sm whitespace-nowrap">
+          <span class="live-beacon"></span>
+          <span class="text-[11px] font-semibold">Shield Active</span>
+        </div>
+
+        <!-- Quick Persona Switcher (Curved Capsule) — only on xl screens -->
+        <div id="desktopPersonaSwitcher" class="hidden xl:flex items-center bg-slate-100/90 p-0.5 rounded-full border border-slate-200 text-xs font-medium text-slate-600">
+          <button onclick="app.quickSwitch('Administrator')" class="px-2 py-1 rounded-full hover:bg-white hover:text-slate-900 transition text-[11px] whitespace-nowrap font-medium" title="Switch to Admin">
+            👑 Admin
+          </button>
+          <button onclick="app.quickSwitch('Staff')" class="px-2 py-1 rounded-full hover:bg-white hover:text-slate-900 transition text-[11px] whitespace-nowrap font-medium" title="Switch to Staff">
+            💼 Staff
+          </button>
+          <button onclick="app.quickSwitch('End User')" class="px-2 py-1 rounded-full hover:bg-white hover:text-slate-900 transition text-[11px] whitespace-nowrap font-medium" title="Switch to User">
+            👤 User
+          </button>
+        </div>
+      </div>
+
+      <!-- User/Auth Section — always visible, content changes on auth state -->
+      <div id="userSection" class="hidden md:flex items-center space-x-2 flex-shrink-0">
+        <!-- Filled by JS -->
+      </div>
+
+      <!-- Mobile Hamburger Button (< md screens) -->
+      <div class="flex items-center space-x-2 md:hidden">
+        <button id="mobileMenuBtn" onclick="app.toggleMobileMenu()" class="p-2 rounded-full text-slate-600 hover:text-slate-900 hover:bg-slate-100 focus:outline-none transition">
+          <svg id="hamburgerIcon" class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"/>
+          </svg>
+          <svg id="closeMenuIcon" class="w-6 h-6 hidden" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+          </svg>
+        </button>
+      </div>
+
+    </div>
+
+    <!-- Decorative Fluid Curved Flow Line beneath the island navbar -->
+    <div class="hidden sm:block w-full max-w-4xl mx-auto -mt-0.5 px-6 pointer-events-none opacity-40">
+      <svg viewBox="0 0 1000 20" fill="none" xmlns="http://www.w3.org/2000/svg" class="w-full h-3">
+        <path d="M0 10 C 200 0, 300 20, 500 10 C 700 0, 800 20, 1000 10" stroke="url(#curveGrad)" stroke-width="2" stroke-linecap="round"/>
+        <defs>
+          <linearGradient id="curveGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+            <stop offset="0%" stop-color="#3b82f6" stop-opacity="0.1"/>
+            <stop offset="50%" stop-color="#6366f1" stop-opacity="0.7"/>
+            <stop offset="100%" stop-color="#3b82f6" stop-opacity="0.1"/>
+          </linearGradient>
+        </defs>
+      </svg>
+    </div>
+
+    <!-- ================= MOBILE NAVIGATION PANEL / DRAWER ================= -->
+    <div id="mobileNavPanel" class="hidden md:hidden mt-2">
+      <div class="glass-island rounded-2xl p-4 space-y-3 shadow-xl mobile-menu-enter border border-slate-200">
+        <!-- Mobile Nav Links -->
+        <div id="mobileNavLinks" class="hidden grid-cols-2 gap-2">
+          <button onclick="app.navigate('upload'); app.closeMobileMenu();" class="p-2.5 rounded-xl text-left text-xs font-semibold bg-blue-50 text-blue-700 flex items-center space-x-2">
+            <span>📤</span>
+            <span>Send Files</span>
+          </button>
+          <button onclick="app.navigate('transfers'); app.closeMobileMenu();" class="p-2.5 rounded-xl text-left text-xs font-semibold bg-slate-50 text-slate-700 hover:bg-slate-100 flex items-center space-x-2">
+            <span>📥</span>
+            <span>My Transfers</span>
+          </button>
+          <button id="mobile-nav-admin" onclick="app.navigate('admin'); app.closeMobileMenu();" class="hidden col-span-2 p-2.5 rounded-xl text-left text-xs font-semibold bg-amber-50 text-amber-800 border border-amber-200 items-center justify-between">
+            <div class="flex items-center space-x-2">
+              <span>🛡️</span>
+              <span>Security Threat Center</span>
+            </div>
+            <span class="text-[9px] bg-amber-600 text-white font-bold px-1.5 py-0.5 rounded-full">ADMIN</span>
+          </button>
+          <button onclick="app.navigate('guide'); app.closeMobileMenu();" class="col-span-2 p-2.5 rounded-xl text-left text-xs font-semibold bg-slate-50 text-slate-700 hover:bg-slate-100 flex items-center space-x-2">
+            <span>ℹ️</span>
+            <span>Security Guide</span>
+          </button>
+        </div>
+
+        <!-- Quick Persona Switch (Mobile) -->
+        <div class="pt-2 border-t border-slate-100">
+          <p class="text-[10px] uppercase font-bold text-slate-400 tracking-wider mb-1.5">Switch Test Persona:</p>
+          <div class="grid grid-cols-3 gap-1.5">
+            <button onclick="app.quickSwitch('Administrator'); app.closeMobileMenu();" class="py-1.5 px-2 bg-slate-100 hover:bg-blue-50 rounded-lg text-xs font-medium text-slate-700 text-center">
+              👑 Admin
+            </button>
+            <button onclick="app.quickSwitch('Staff'); app.closeMobileMenu();" class="py-1.5 px-2 bg-slate-100 hover:bg-blue-50 rounded-lg text-xs font-medium text-slate-700 text-center">
+              💼 Staff
+            </button>
+            <button onclick="app.quickSwitch('End User'); app.closeMobileMenu();" class="py-1.5 px-2 bg-slate-100 hover:bg-blue-50 rounded-lg text-xs font-medium text-slate-700 text-center">
+              👤 User
+            </button>
+          </div>
+        </div>
+
+        <!-- User Info & Auth (Mobile) -->
+        <div id="mobileUserSection" class="pt-2 border-t border-slate-100 flex items-center justify-between">
+          <div id="mobileUserInfo" class="text-xs text-slate-600 font-medium">Please sign in to transfer files</div>
+          <button id="mobileAuthBtn" onclick="app.navigate('landing-login'); app.closeMobileMenu();" class="px-3 py-1.5 rounded-full text-xs font-semibold bg-blue-600 text-white shadow-sm">
+            Sign In
+          </button>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <!-- ================= MAIN CONTENT WRAPPER ================= -->
+  <main class="flex-grow max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8">
+
+    <!-- ================= VIEW 0: DEDICATED LANDING & LOGIN PAGE WITH PROJECT INFO TEMPLATE ================= -->
+    <section id="view-landing-login" class="view-content space-y-8">
+      
+      <div class="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
+        
+        <!-- LEFT COLUMN: Attractive Project Overview & Architecture Showcase (7 cols) -->
+        <div class="lg:col-span-7 space-y-6">
+          
+          <!-- Top Badge -->
+          <div class="inline-flex items-center space-x-2 bg-blue-50 border border-blue-200/80 px-3.5 py-1.5 rounded-full text-xs font-semibold text-blue-700 shadow-sm">
+            <span class="w-2 h-2 rounded-full bg-blue-600 animate-pulse"></span>
+            <span>Enterprise File Transfer with Built-in Threat Monitoring</span>
+          </div>
+
+          <!-- Main Hero Heading -->
+          <div class="space-y-3">
+            <h1 class="text-3xl sm:text-4xl lg:text-5xl font-extrabold tracking-tight text-slate-900 leading-tight">
+              Confident Sharing.<br>
+              <span class="brand-gradient">Proactive Threat Defense.</span>
+            </h1>
+            <p class="text-sm sm:text-base text-slate-600 leading-relaxed max-w-2xl">
+              Traditional file transfer tools only encrypt data passively without observing who is trying to access it. <strong>CipherDrop</strong> unifies authenticated cryptographic storage with an active intrusion detection engine that stops unauthorized access, brute-force password guessing, and ciphertext tampering in real-time.
+            </p>
+          </div>
+
+          <!-- Key Project Architectural Pillars Grid -->
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-2">
+            
+            <!-- Pillar 1 -->
+            <div class="glass-card p-4 sm:p-5 space-y-2 border-l-4 border-l-blue-600">
+              <div class="flex items-center space-x-2.5">
+                <div class="w-8 h-8 rounded-lg bg-blue-100 text-blue-700 flex items-center justify-center font-bold text-sm">
+                  🔒
+                </div>
+                <h3 class="text-sm font-bold text-slate-900">Zero Plaintext at Rest</h3>
+              </div>
+              <p class="text-xs text-slate-500 leading-relaxed">
+                Every file is encrypted in memory with authenticated AEAD stream ciphers before reaching storage. Server disks never hold unencrypted files.
+              </p>
+            </div>
+
+            <!-- Pillar 2 -->
+            <div class="glass-card p-4 sm:p-5 space-y-2 border-l-4 border-l-emerald-600">
+              <div class="flex items-center space-x-2.5">
+                <div class="w-8 h-8 rounded-lg bg-emerald-100 text-emerald-700 flex items-center justify-center font-bold text-sm">
+                  ⚡
+                </div>
+                <h3 class="text-sm font-bold text-slate-900">Active Threat Surveillance</h3>
+              </div>
+              <p class="text-xs text-slate-500 leading-relaxed">
+                Sliding-window heuristics automatically lock accounts after 5 consecutive failed logins and auto-quarantine files upon tamper detection.
+              </p>
+            </div>
+
+            <!-- Pillar 3 -->
+            <div class="glass-card p-4 sm:p-5 space-y-2 border-l-4 border-l-indigo-600">
+              <div class="flex items-center space-x-2.5">
+                <div class="w-8 h-8 rounded-lg bg-indigo-100 text-indigo-700 flex items-center justify-center font-bold text-sm">
+                  👥
+                </div>
+                <h3 class="text-sm font-bold text-slate-900">Strict Recipient Verification</h3>
+              </div>
+              <p class="text-xs text-slate-500 leading-relaxed">
+                Decryption keys and access are granted strictly to verified recipients. Unauthorized download attempts are blocked, logged, and alerted.
+              </p>
+            </div>
+
+            <!-- Pillar 4 -->
+            <div class="glass-card p-4 sm:p-5 space-y-2 border-l-4 border-l-amber-500">
+              <div class="flex items-center space-x-2.5">
+                <div class="w-8 h-8 rounded-lg bg-amber-100 text-amber-800 flex items-center justify-center font-bold text-sm">
+                  📡
+                </div>
+                <h3 class="text-sm font-bold text-slate-900">Sub-Second Live Alerts</h3>
+              </div>
+              <p class="text-xs text-slate-500 leading-relaxed">
+                Real-time security telemetry and audit trails stream straight to the Administrator command center via WebSockets with zero page refreshes.
+              </p>
+            </div>
+
+          </div>
+
+          <!-- Trust & Performance Metrics Banner -->
+          <div class="glass-card p-4 sm:p-5 flex flex-wrap items-center justify-around gap-4 text-center">
+            <div>
+              <div class="text-lg sm:text-2xl font-extrabold text-slate-900">100%</div>
+              <div class="text-[11px] text-slate-500 font-medium mt-0.5">Volatile Plaintext Isolation</div>
+            </div>
+            <div class="h-8 w-px bg-slate-200 hidden sm:block"></div>
+            <div>
+              <div class="text-lg sm:text-2xl font-extrabold text-blue-600">&lt; 3 Seconds</div>
+              <div class="text-[11px] text-slate-500 font-medium mt-0.5">Threat Broadcast Latency</div>
+            </div>
+            <div class="h-8 w-px bg-slate-200 hidden sm:block"></div>
+            <div>
+              <div class="text-lg sm:text-2xl font-extrabold text-emerald-600">128-bit AEAD</div>
+              <div class="text-[11px] text-slate-500 font-medium mt-0.5">Tamper Proofing Tag</div>
+            </div>
+          </div>
+
+        </div>
+
+        <!-- RIGHT COLUMN: Sleek Dedicated Login / Registration Card (5 cols) -->
+        <div class="lg:col-span-5">
+          <div class="glass-card p-6 sm:p-8 space-y-6 shadow-xl border border-slate-200/90 relative">
+            
+            <!-- Card Header -->
+            <div class="flex items-center justify-between pb-4 border-b border-slate-200">
+              <div>
+                <h2 id="landingAuthTitle" class="text-xl font-bold text-slate-900">Sign in to CipherDrop</h2>
+                <p id="landingAuthSubtitle" class="text-xs text-slate-500 mt-0.5">Log in to upload, share, or decrypt your files</p>
+              </div>
+              <div class="w-10 h-10 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center font-bold">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/>
+                </svg>
+              </div>
+            </div>
+
+            <!-- 1-Click Quick Demo Personas -->
+            <div class="bg-slate-50/90 border border-slate-200 rounded-xl p-3.5 space-y-2">
+              <div class="flex items-center justify-between">
+                <span class="text-[11px] font-semibold text-slate-600 uppercase tracking-wide">1-Click Test Access:</span>
+                <span class="text-[10px] text-blue-600 font-medium">Instant Login</span>
+              </div>
+              <div class="grid grid-cols-3 gap-2">
+                <button onclick="app.quickLogin('Administrator')" class="py-2 px-2 bg-white hover:bg-blue-50 hover:border-blue-300 border border-slate-200 rounded-lg text-xs font-semibold text-slate-800 shadow-sm transition text-center flex flex-col items-center">
+                  <span class="text-sm">👑</span>
+                  <span class="mt-0.5">Admin</span>
+                </button>
+                <button onclick="app.quickLogin('Staff')" class="py-2 px-2 bg-white hover:bg-blue-50 hover:border-blue-300 border border-slate-200 rounded-lg text-xs font-semibold text-slate-800 shadow-sm transition text-center flex flex-col items-center">
+                  <span class="text-sm">💼</span>
+                  <span class="mt-0.5">Staff</span>
+                </button>
+                <button onclick="app.quickLogin('End User')" class="py-2 px-2 bg-white hover:bg-blue-50 hover:border-blue-300 border border-slate-200 rounded-lg text-xs font-semibold text-slate-800 shadow-sm transition text-center flex flex-col items-center">
+                  <span class="text-sm">👤</span>
+                  <span class="mt-0.5">User</span>
+                </button>
+              </div>
+            </div>
+
+            <div class="relative flex items-center justify-center">
+              <div class="border-t border-slate-200 w-full"></div>
+              <span class="bg-white px-3 text-[11px] text-slate-400 font-medium uppercase absolute">Or enter credentials</span>
+            </div>
+
+            <!-- Error Notification Alert -->
+            <div id="landingAuthError" class="hidden p-3.5 rounded-xl bg-rose-50 border border-rose-200 text-xs text-rose-800 flex items-start space-x-2">
+              <span class="text-rose-600 font-bold">⚠️</span>
+              <span id="landingAuthErrorText" class="leading-relaxed">Invalid credentials.</span>
+            </div>
+
+            <!-- Login / Registration Form -->
+            <form id="landingAuthForm" onsubmit="app.handleLandingAuthSubmit(event)" class="space-y-4">
+              
+              <!-- Full Name (Register Only) -->
+              <div id="landingNameGroup" class="hidden">
+                <label class="block text-xs font-semibold text-slate-700 mb-1">Full Name</label>
+                <input type="text" id="landingName" placeholder="e.g. Alex Morgan" class="w-full text-xs border border-slate-300 rounded-xl px-3.5 py-2.5 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 bg-white">
+              </div>
+
+              <!-- Role Selector (Register Only) -->
+              <div id="landingRoleGroup" class="hidden">
+                <label class="block text-xs font-semibold text-slate-700 mb-1">Account Role</label>
+                <select id="landingRole" class="w-full text-xs border border-slate-300 rounded-xl px-3.5 py-2.5 bg-white focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500">
+                  <option value="End User">End User (Send &amp; Receive Files)</option>
+                  <option value="Staff">Staff (Organizational File Transfer)</option>
+                </select>
+              </div>
+
+              <!-- Email -->
+              <div>
+                <label class="block text-xs font-semibold text-slate-700 mb-1">Email Address</label>
+                <input type="email" id="landingEmail" required placeholder="user@securetransfer.local" class="w-full text-xs border border-slate-300 rounded-xl px-3.5 py-2.5 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 bg-white">
+              </div>
+
+              <!-- Password -->
+              <div>
+                <label class="block text-xs font-semibold text-slate-700 mb-1">Password</label>
+                <input type="password" id="landingPassword" required placeholder="••••••••" class="w-full text-xs border border-slate-300 rounded-xl px-3.5 py-2.5 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 bg-white">
+              </div>
+
+              <!-- Brute Force Security Notice -->
+              <div class="bg-slate-50 border border-slate-200/80 rounded-xl p-3 text-[11px] text-slate-500 flex items-start space-x-2">
+                <span class="text-blue-600 font-bold">🛡️</span>
+                <span>Protected against password guessing: 5 consecutive failed attempts locks the account for 15 minutes.</span>
+              </div>
+
+              <button type="submit" id="landingSubmitBtn" class="w-full py-3 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-semibold text-xs transition shadow-md shadow-blue-500/20 flex items-center justify-center space-x-2">
+                <span>Sign In to CipherDrop</span>
+                <span>→</span>
+              </button>
+            </form>
+
+            <!-- Toggle Mode (Sign In vs Register) -->
+            <div class="text-center pt-2 text-xs text-slate-500">
+              <span id="landingToggleLabel">Don't have an account yet?</span>
+              <button id="landingToggleBtn" onclick="app.toggleLandingAuthMode()" class="text-blue-600 font-semibold hover:underline ml-1">
+                Create an account
+              </button>
+            </div>
+
+          </div>
+        </div>
+
+      </div>
+
+    </section>
+
+    <!-- ================= VIEW 1: UPLOAD WIZARD (4 STEPS - AUTHENTICATED USERS) ================= -->
+    <section id="view-upload" class="view-content hidden space-y-6">
+      
+      <!-- Modern Hero Intro Banner with Organic Curved Wave -->
+      <div class="relative overflow-hidden rounded-3xl bg-gradient-to-br from-slate-900 via-indigo-950 to-blue-950 text-white p-6 sm:p-10 shadow-xl border border-indigo-900/40">
+        <div class="absolute -right-16 -top-16 w-80 h-80 bg-blue-500/15 rounded-full blur-3xl pointer-events-none"></div>
+        <div class="absolute -left-16 -bottom-16 w-80 h-80 bg-indigo-500/15 rounded-full blur-3xl pointer-events-none"></div>
+
+        <!-- Decorative fluid wave curve -->
+        <div class="absolute bottom-0 left-0 right-0 overflow-hidden pointer-events-none opacity-20">
+          <svg viewBox="0 0 1200 120" preserveAspectRatio="none" class="relative block w-full h-8 text-white fill-current">
+            <path d="M0,0 C150,90 350,-40 500,60 C650,140 900,10 1200,40 L1200,120 L0,120 Z"></path>
+          </svg>
+        </div>
+
+        <div class="relative z-10 flex flex-col lg:flex-row lg:items-center justify-between gap-6">
+          <div class="max-w-2xl space-y-3">
+            <div class="inline-flex items-center space-x-2 bg-white/10 backdrop-blur-md px-3 py-1 rounded-full text-xs font-medium text-blue-200 border border-white/15">
+              <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
+              <span>Zero-Trust Encrypted Gateway</span>
+            </div>
+            <h1 class="text-2xl sm:text-4xl font-extrabold tracking-tight text-white leading-tight">
+              Transfer Sensitive Files with Confidence
+            </h1>
+            <p class="text-blue-100/90 text-sm sm:text-base leading-relaxed">
+              Every file is encrypted on-the-fly with authenticated protection before reaching storage. Decryption is granted strictly to verified recipients, backed by continuous real-time threat monitoring.
+            </p>
+          </div>
+
+          <div class="grid grid-cols-2 gap-3 min-w-[280px]">
+            <div class="bg-white/10 backdrop-blur-md p-3.5 rounded-xl border border-white/10 text-xs">
+              <div class="text-blue-200 font-medium">Confidentiality</div>
+              <div class="text-white font-bold text-sm mt-0.5">Encrypted at Rest</div>
+              <div class="text-[10px] text-slate-300 mt-1">Zero plaintext storage</div>
+            </div>
+            <div class="bg-white/10 backdrop-blur-md p-3.5 rounded-xl border border-white/10 text-xs">
+              <div class="text-emerald-300 font-medium">Integrity</div>
+              <div class="text-white font-bold text-sm mt-0.5">Tamper Proof</div>
+              <div class="text-[10px] text-slate-300 mt-1">Automated quarantine</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- 4-Step Progress Indicator -->
+      <div class="glass-card p-4 sm:p-6">
+        <div class="flex items-center justify-between max-w-3xl mx-auto">
+          <div class="flex flex-col items-center flex-1 cursor-pointer" onclick="uploadWizard.setStep(1)">
+            <div id="step-ind-1" class="step-circle step-active">1</div>
+            <span class="text-[11px] sm:text-xs font-semibold mt-2 text-slate-800 text-center">Select File</span>
+          </div>
+          <div class="curved-step-track flex-1 mx-1.5 sm:mx-3" id="step-line-1"></div>
+
+          <div class="flex flex-col items-center flex-1 cursor-pointer" onclick="uploadWizard.setStep(2)">
+            <div id="step-ind-2" class="step-circle step-pending">2</div>
+            <span class="text-[11px] sm:text-xs font-medium mt-2 text-slate-500 text-center">Recipient</span>
+          </div>
+          <div class="curved-step-track flex-1 mx-1.5 sm:mx-3" id="step-line-2"></div>
+
+          <div class="flex flex-col items-center flex-1 cursor-pointer" onclick="uploadWizard.setStep(3)">
+            <div id="step-ind-3" class="step-circle step-pending">3</div>
+            <span class="text-[11px] sm:text-xs font-medium mt-2 text-slate-500 text-center">Security Review</span>
+          </div>
+          <div class="curved-step-track flex-1 mx-1.5 sm:mx-3" id="step-line-3"></div>
+
+          <div class="flex flex-col items-center flex-1">
+            <div id="step-ind-4" class="step-circle step-pending">4</div>
+            <span class="text-[11px] sm:text-xs font-medium mt-2 text-slate-500 text-center">Transfer Done</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Step Cards Container -->
+      <div class="glass-card p-6 sm:p-8 max-w-3xl mx-auto min-h-[380px] flex flex-col justify-between">
+        
+        <!-- STEP 1: SELECT FILE -->
+        <div id="wizard-step-1" class="wizard-pane space-y-6">
+          <div>
+            <h2 class="text-xl font-bold text-slate-900">Step 1: Choose File to Transfer</h2>
+            <p class="text-sm text-slate-500 mt-1">Select any document, data sheet, image, or archive file up to 100 MB.</p>
+          </div>
+
+          <!-- Drag and Drop Target -->
+          <div id="dropZone" class="border-2 border-dashed border-slate-300 hover:border-blue-500 rounded-2xl p-8 sm:p-10 text-center transition cursor-pointer bg-slate-50/60 hover:bg-blue-50/40 group">
+            <input type="file" id="fileInput" class="hidden" onchange="uploadWizard.handleFileSelected(this.files[0])">
+            <div class="flex flex-col items-center space-y-3">
+              <div class="w-14 h-14 rounded-2xl bg-blue-100/80 text-blue-600 flex items-center justify-center group-hover:scale-110 transition-transform">
+                <svg class="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"/>
+                </svg>
+              </div>
+              <div>
+                <p class="text-sm font-semibold text-slate-800">
+                  <span class="text-blue-600 hover:underline">Click to browse</span> or drag and drop your file here
+                </p>
+                <p class="text-xs text-slate-400 mt-1">Supported formats: PDF, DOCX, ZIP, CSV, JPG, PNG (Max 100MB)</p>
+              </div>
+            </div>
+          </div>
+
+          <!-- Selected File Card Preview -->
+          <div id="filePreview" class="hidden p-4 rounded-xl bg-blue-50/80 border border-blue-200 flex items-center justify-between shadow-sm">
+            <div class="flex items-center space-x-3 truncate">
+              <div class="w-10 h-10 rounded-lg bg-blue-600 text-white flex items-center justify-center font-bold text-xs uppercase flex-shrink-0" id="fileExtTag">
+                FILE
+              </div>
+              <div class="truncate">
+                <p class="text-sm font-semibold text-slate-900 truncate" id="fileNamePreview">document.pdf</p>
+                <p class="text-xs text-slate-500" id="fileSizePreview">1.4 MB</p>
+              </div>
+            </div>
+            <button onclick="uploadWizard.clearFile()" class="text-slate-400 hover:text-rose-600 p-2 transition rounded-lg hover:bg-white" title="Remove file">
+              <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+              </svg>
+            </button>
+          </div>
+
+          <div class="bg-slate-50/80 border border-slate-200 rounded-xl p-3.5 text-xs text-slate-600 flex items-start space-x-2.5">
+            <span class="text-blue-600 font-bold text-sm">🛡️</span>
+            <span>Files are encrypted in volatile memory prior to storage. Plaintext bytes never touch the physical disk.</span>
+          </div>
+
+          <div class="flex justify-end pt-4">
+            <button id="btn-next-1" disabled onclick="uploadWizard.setStep(2)" class="w-full sm:w-auto px-6 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-semibold disabled:opacity-50 disabled:cursor-not-allowed transition shadow-md shadow-blue-500/20">
+              Continue to Recipient →
+            </button>
+          </div>
+        </div>
+
+        <!-- STEP 2: CHOOSE RECIPIENT -->
+        <div id="wizard-step-2" class="wizard-pane hidden space-y-6">
+          <div>
+            <h2 class="text-xl font-bold text-slate-900">Step 2: Choose Authorized Recipient</h2>
+            <p class="text-sm text-slate-500 mt-1">Select the person who is authorized to decrypt and retrieve this file.</p>
+          </div>
+
+          <div class="space-y-3">
+            <label class="block text-xs font-semibold uppercase tracking-wider text-slate-500">Registered Users</label>
+            <div id="recipientListContainer" class="space-y-2 max-h-64 overflow-y-auto pr-1">
+              <p class="text-xs text-slate-400">Loading registered users...</p>
+            </div>
+          </div>
+
+          <div class="bg-blue-50/80 border border-blue-200 rounded-xl p-3.5 text-xs text-blue-900 flex items-start space-x-2.5">
+            <span class="text-blue-600 font-bold text-sm">🔒</span>
+            <span>Only this recipient (and you as uploader) will be permitted to decrypt the file. Non-recipients are denied and logged.</span>
+          </div>
+
+          <div class="flex items-center justify-between pt-4">
+            <button onclick="uploadWizard.setStep(1)" class="px-5 py-2 rounded-xl border border-slate-300 text-slate-700 text-xs font-semibold hover:bg-slate-50 transition">
+              ← Back
+            </button>
+            <button id="btn-next-2" disabled onclick="uploadWizard.setStep(3)" class="px-6 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-semibold disabled:opacity-50 disabled:cursor-not-allowed transition shadow-md shadow-blue-500/20">
+              Review Transfer →
+            </button>
+          </div>
+        </div>
+
+        <!-- STEP 3: SECURITY REVIEW -->
+        <div id="wizard-step-3" class="wizard-pane hidden space-y-6">
+          <div>
+            <h2 class="text-xl font-bold text-slate-900">Step 3: Security &amp; Transfer Review</h2>
+            <p class="text-sm text-slate-500 mt-1">Confirm the file transfer and cryptographic protection details.</p>
+          </div>
+
+          <div class="bg-slate-50/80 border border-slate-200 rounded-2xl p-5 sm:p-6 space-y-4">
+            <div class="flex items-center justify-between pb-3 border-b border-slate-200">
+              <span class="text-xs text-slate-500 font-medium">Selected File</span>
+              <span class="text-xs font-semibold text-slate-900" id="reviewFileName">-</span>
+            </div>
+            <div class="flex items-center justify-between pb-3 border-b border-slate-200">
+              <span class="text-xs text-slate-500 font-medium">File Size</span>
+              <span class="text-xs font-semibold text-slate-900" id="reviewFileSize">-</span>
+            </div>
+            <div class="flex items-center justify-between pb-3 border-b border-slate-200">
+              <span class="text-xs text-slate-500 font-medium">Authorized Recipient</span>
+              <span class="text-xs font-semibold text-blue-700" id="reviewRecipient">-</span>
+            </div>
+            <div class="flex items-center justify-between pb-3 border-b border-slate-200">
+              <span class="text-xs text-slate-500 font-medium">Storage Cipher</span>
+              <span class="text-xs font-mono font-semibold text-slate-900 bg-white px-2.5 py-1 rounded-md border border-slate-200">Authenticated AEAD Stream</span>
+            </div>
+            <div class="flex items-center justify-between pb-3 border-b border-slate-200">
+              <span class="text-xs text-slate-500 font-medium">Key Architecture</span>
+              <span class="text-xs font-mono text-slate-700">Per-File Salt &amp; PBKDF2 (100k rounds)</span>
+            </div>
+            <div class="flex items-center justify-between">
+              <span class="text-xs text-slate-500 font-medium">Integrity Verification</span>
+              <span class="text-xs font-semibold text-emerald-600 flex items-center space-x-1">
+                <span>✓ 128-bit Auth Tag &amp; SHA-256</span>
+              </span>
+            </div>
+          </div>
+
+          <div class="flex items-center justify-between pt-4">
+            <button onclick="uploadWizard.setStep(2)" class="px-5 py-2 rounded-xl border border-slate-300 text-slate-700 text-xs font-semibold hover:bg-slate-50 transition">
+              ← Back
+            </button>
+            <button id="btn-submit-upload" onclick="uploadWizard.executeUpload()" class="px-6 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-semibold transition shadow-md shadow-emerald-500/20 flex items-center space-x-2">
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/>
+              </svg>
+              <span>Encrypt &amp; Send File</span>
+            </button>
+          </div>
+        </div>
+
+        <!-- STEP 4: TRANSFER COMPLETE -->
+        <div id="wizard-step-4" class="wizard-pane hidden space-y-6 text-center py-6">
+          <div class="w-16 h-16 rounded-2xl bg-emerald-100 text-emerald-600 flex items-center justify-center mx-auto shadow-md shadow-emerald-500/20">
+            <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"/>
+            </svg>
+          </div>
+          <div>
+            <h2 class="text-2xl font-extrabold text-slate-900">Encrypted Transfer Successful!</h2>
+            <p class="text-sm text-slate-500 mt-1">Your file has been secured and registered for the recipient.</p>
+          </div>
+
+          <div class="bg-slate-50/80 border border-slate-200 rounded-2xl p-5 max-w-lg mx-auto text-left space-y-2.5 text-xs text-slate-700 font-mono">
+            <div><span class="text-slate-400">File ID:</span> <span id="doneFileId" class="text-slate-900 font-bold">-</span></div>
+            <div><span class="text-slate-400">Integrity Hash:</span> <span id="doneChecksum" class="text-blue-700 truncate block">-</span></div>
+            <div><span class="text-slate-400">Security Status:</span> <span class="text-emerald-700 font-bold">PROTECTED AT REST</span></div>
+          </div>
+
+          <div class="flex flex-col sm:flex-row items-center justify-center gap-3 pt-4">
+            <button onclick="uploadWizard.reset()" class="w-full sm:w-auto px-6 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-semibold transition shadow-md shadow-blue-500/20">
+              Send Another File
+            </button>
+            <button onclick="app.navigate('transfers')" class="w-full sm:w-auto px-6 py-2.5 rounded-xl border border-slate-300 text-slate-700 text-xs font-semibold hover:bg-slate-50 transition">
+              View My Transfers
+            </button>
+          </div>
+        </div>
+
+      </div>
+
+    </section>
+
+    <!-- ================= VIEW 2: TRANSFERS (INBOX & OUTBOX) ================= -->
+    <section id="view-transfers" class="view-content hidden space-y-6">
+      <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+        <div>
+          <h1 class="text-2xl font-bold text-slate-900">File Transfers</h1>
+          <p class="text-sm text-slate-500">Access files shared with you or inspect files you have securely transferred.</p>
+        </div>
+        
+        <!-- Toggle Tabs: Received vs Sent -->
+        <div class="inline-flex rounded-xl border border-slate-200 bg-white p-1 shadow-sm">
+          <button id="tab-received" onclick="transfersManager.setTab('received')" class="px-4 py-1.5 rounded-lg text-xs font-semibold bg-blue-600 text-white shadow-sm transition">
+            Inbox (Received)
+          </button>
+          <button id="tab-sent" onclick="transfersManager.setTab('sent')" class="px-4 py-1.5 rounded-lg text-xs font-medium text-slate-600 hover:text-slate-900 transition">
+            Outbox (Sent)
+          </button>
+        </div>
+      </div>
+
+      <!-- Transfers List Card -->
+      <div class="glass-card overflow-hidden">
+        <div class="p-4 border-b border-slate-200/80 bg-slate-50/50 flex items-center justify-between gap-3">
+          <div class="relative w-full max-w-xs">
+            <input type="text" id="transferSearchInput" onkeyup="transfersManager.filterTable()" placeholder="Search transfers..." class="w-full text-xs pl-8 pr-3 py-2 rounded-lg border border-slate-300 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 bg-white">
+            <svg class="w-4 h-4 text-slate-400 absolute left-2.5 top-2.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
+            </svg>
+          </div>
+          <button onclick="transfersManager.load()" class="text-xs text-blue-600 font-semibold hover:underline flex items-center space-x-1 flex-shrink-0">
+            <span>Refresh</span>
+          </button>
+        </div>
+
+        <!-- Responsive Table Container -->
+        <div class="overflow-x-auto">
+          <table class="w-full text-left text-sm" id="transfersTable">
+            <thead class="bg-slate-100/70 text-slate-600 text-xs uppercase font-semibold border-b border-slate-200">
+              <tr>
+                <th class="px-5 py-3.5">File Details</th>
+                <th class="px-5 py-3.5" id="th-user-col">Sender</th>
+                <th class="px-5 py-3.5">Size</th>
+                <th class="px-5 py-3.5">Security Status</th>
+                <th class="px-5 py-3.5">Date</th>
+                <th class="px-5 py-3.5 text-right">Action</th>
+              </tr>
+            </thead>
+            <tbody id="transfersTableBody" class="divide-y divide-slate-200 text-slate-700 text-xs">
+              <tr>
+                <td colspan="6" class="px-6 py-8 text-center text-slate-400">Loading transfers...</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <!-- ================= VIEW 3: THREAT CENTER & ADMIN DASHBOARD ================= -->
+    <section id="view-admin" class="view-content hidden space-y-6">
+      
+      <!-- Admin Header with Live Threat Engine Status -->
+      <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 pb-2 border-b border-slate-200">
+        <div>
+          <div class="flex items-center space-x-2">
+            <h1 class="text-2xl font-bold text-slate-900">Security Threat Center</h1>
+            <span class="bg-amber-100 text-amber-800 text-xs font-bold px-2 py-0.5 rounded-full border border-amber-200">Admin Only</span>
+          </div>
+          <p class="text-xs sm:text-sm text-slate-500">Real-time threat monitoring, anomaly detection, audit logging, and security controls.</p>
+        </div>
+        <div class="flex items-center space-x-2 flex-wrap gap-2">
+          <span class="live-beacon"></span>
+          <span class="text-xs font-semibold text-emerald-700 bg-emerald-50 border border-emerald-200 px-3 py-1 rounded-full">
+            Real-Time Engine Active
+          </span>
+          <button onclick="adminDashboard.refreshAll()" class="px-3 py-1 bg-white border border-slate-300 rounded-lg text-xs font-medium text-slate-700 hover:bg-slate-50 shadow-sm">
+            Refresh
+          </button>
+        </div>
+      </div>
+
+      <!-- KPI Summary Cards -->
+      <div class="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
+        <div class="glass-card p-4 sm:p-5 border-l-4 border-l-blue-600">
+          <p class="text-[11px] font-semibold text-slate-400 uppercase tracking-wider">Encrypted Files</p>
+          <div class="flex items-baseline justify-between mt-1.5">
+            <h3 class="text-xl sm:text-2xl font-bold text-slate-900" id="kpi-totalFiles">0</h3>
+            <span class="text-[10px] font-medium text-blue-700 bg-blue-50 px-2 py-0.5 rounded">Protected</span>
+          </div>
+          <p class="text-[10px] text-slate-400 mt-1">Zero plaintext on disk</p>
+        </div>
+
+        <div class="glass-card p-4 sm:p-5 border-l-4 border-l-rose-500">
+          <p class="text-[11px] font-semibold text-slate-400 uppercase tracking-wider">Active Threats</p>
+          <div class="flex items-baseline justify-between mt-1.5">
+            <h3 class="text-xl sm:text-2xl font-bold text-rose-600" id="kpi-activeThreats">0</h3>
+            <span class="text-[10px] font-medium text-rose-700 bg-rose-50 px-2 py-0.5 rounded" id="kpi-criticalCount">0 Critical</span>
+          </div>
+          <p class="text-[10px] text-slate-400 mt-1" id="kpi-threatSubtitle">Live alert stream</p>
+        </div>
+
+        <div class="glass-card p-4 sm:p-5 border-l-4 border-l-amber-500">
+          <p class="text-[11px] font-semibold text-slate-400 uppercase tracking-wider">Users Protected</p>
+          <div class="flex items-baseline justify-between mt-1.5">
+            <h3 class="text-xl sm:text-2xl font-bold text-slate-900" id="kpi-totalUsers">0</h3>
+            <span class="text-[10px] font-medium text-amber-700 bg-amber-50 px-2 py-0.5 rounded" id="kpi-lockedUsers">0 Locked</span>
+          </div>
+          <p class="text-[10px] text-slate-400 mt-1">Brute-force defense active</p>
+        </div>
+
+        <div class="glass-card p-4 sm:p-5 border-l-4 border-l-emerald-600">
+          <p class="text-[11px] font-semibold text-slate-400 uppercase tracking-wider">Audit Log Entries</p>
+          <div class="flex items-baseline justify-between mt-1.5">
+            <h3 class="text-xl sm:text-2xl font-bold text-slate-900" id="kpi-totalLogs">0</h3>
+            <span class="text-[10px] font-medium text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded">Verified</span>
+          </div>
+          <p class="text-[10px] text-slate-400 mt-1">All events logged</p>
+        </div>
+      </div>
+
+      <!-- INTERACTIVE LAB THREAT SIMULATOR -->
+      <div class="rounded-2xl p-5 sm:p-6 bg-gradient-to-r from-slate-900 via-slate-900 to-indigo-950 text-white shadow-xl border border-slate-800">
+        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-white/10">
+          <div>
+            <div class="flex items-center space-x-2">
+              <span class="text-amber-400 font-bold text-base">⚡</span>
+              <h3 class="text-base font-bold text-white tracking-tight">Interactive Threat Simulation Lab</h3>
+              <span class="text-[10px] bg-indigo-500/30 text-indigo-200 border border-indigo-400/20 px-2 py-0.5 rounded-full font-mono">Live Testing</span>
+            </div>
+            <p class="text-xs text-slate-300 mt-1">
+              Trigger cyber attack scenarios in one click to test real-time detection, account lockout, tampering alerts, and live WebSocket broadcasts.
+            </p>
+          </div>
+        </div>
+
+        <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3 mt-4">
+          <button onclick="adminDashboard.runSimulation('brute_force')" class="p-3.5 rounded-xl bg-white/5 hover:bg-white/15 border border-white/10 text-left transition hover:scale-[1.02] flex flex-col justify-between">
+            <span class="text-xs font-bold text-amber-300">1. Brute Force</span>
+            <span class="text-[11px] text-slate-300 mt-1">5 failed logins → Lockout + Alert</span>
+          </button>
+          <button onclick="adminDashboard.runSimulation('decrypt_tamper')" class="p-3.5 rounded-xl bg-white/5 hover:bg-white/15 border border-white/10 text-left transition hover:scale-[1.02] flex flex-col justify-between">
+            <span class="text-xs font-bold text-rose-300">2. Cipher Tamper</span>
+            <span class="text-[11px] text-slate-300 mt-1">Tag mismatch → Auto Quarantine</span>
+          </button>
+          <button onclick="adminDashboard.runSimulation('unauthorized_access')" class="p-3.5 rounded-xl bg-white/5 hover:bg-white/15 border border-white/10 text-left transition hover:scale-[1.02] flex flex-col justify-between">
+            <span class="text-xs font-bold text-blue-300">3. Unauthorized Download</span>
+            <span class="text-[11px] text-slate-300 mt-1">Access block + High Alert</span>
+          </button>
+          <button onclick="adminDashboard.runSimulation('download_spike')" class="p-3.5 rounded-xl bg-white/5 hover:bg-white/15 border border-white/10 text-left transition hover:scale-[1.02] flex flex-col justify-between">
+            <span class="text-xs font-bold text-yellow-300">4. Download Spike</span>
+            <span class="text-[11px] text-slate-300 mt-1">Velocity anomaly detection</span>
+          </button>
+          <button onclick="adminDashboard.runSimulation('malicious_file_upload')" class="p-3.5 rounded-xl bg-white/5 hover:bg-white/15 border border-white/10 text-left transition hover:scale-[1.02] flex flex-col justify-between">
+            <span class="text-xs font-bold text-emerald-300">5. Executable Intercept</span>
+            <span class="text-[11px] text-slate-300 mt-1">Prohibited file blocked</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- Real-Time Alerts Feed & Security Controls Grid -->
+      <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        
+        <div class="lg:col-span-2 glass-card flex flex-col">
+          <div class="p-4 border-b border-slate-200/80 flex flex-wrap items-center justify-between gap-2 bg-slate-50/50">
+            <div class="flex items-center space-x-2">
+              <h3 class="font-bold text-sm text-slate-900">Security Alerts Stream</h3>
+              <span id="alertsCountBadge" class="bg-rose-100 text-rose-800 text-xs font-bold px-2 py-0.5 rounded-full">0 Active</span>
+            </div>
+            
+            <div class="flex items-center space-x-2">
+              <select id="alertStatusFilter" onchange="adminDashboard.loadAlerts()" class="text-xs border border-slate-300 rounded-lg px-2.5 py-1.5 bg-white text-slate-700">
+                <option value="Active">Active Alerts</option>
+                <option value="Reviewed">Reviewed</option>
+                <option value="Resolved">Resolved</option>
+                <option value="all">All Alerts</option>
+              </select>
+              <select id="alertSeverityFilter" onchange="adminDashboard.loadAlerts()" class="text-xs border border-slate-300 rounded-lg px-2.5 py-1.5 bg-white text-slate-700">
+                <option value="all">All Severities</option>
+                <option value="Critical">Critical Only</option>
+                <option value="High">High Only</option>
+                <option value="Medium">Medium Only</option>
+                <option value="Low">Low Only</option>
+              </select>
+            </div>
+          </div>
+
+          <div id="alertsFeedContainer" class="p-4 space-y-3 max-h-[480px] overflow-y-auto divide-y divide-slate-100">
+            <p class="text-xs text-slate-400 text-center py-6">Loading alerts...</p>
+          </div>
+        </div>
+
+        <div class="space-y-6">
+          <div class="glass-card p-5 space-y-4">
+            <div class="flex items-center justify-between pb-2 border-b border-slate-200">
+              <h3 class="font-bold text-sm text-slate-900">Security Thresholds</h3>
+              <span class="text-[10px] text-slate-400 font-mono">Dynamic Policy</span>
+            </div>
+
+            <form id="policyForm" onsubmit="adminDashboard.savePolicy(event)" class="space-y-3 text-xs">
+              <div>
+                <label class="block font-medium text-slate-700 mb-1">Max Failed Logins Before Lockout</label>
+                <input type="number" id="polMaxLogins" min="2" max="20" class="w-full border border-slate-300 rounded-lg px-3 py-1.5 focus:ring-1 focus:ring-blue-500">
+              </div>
+              <div>
+                <label class="block font-medium text-slate-700 mb-1">Lockout Duration (Minutes)</label>
+                <input type="number" id="polLockoutMins" min="1" max="120" class="w-full border border-slate-300 rounded-lg px-3 py-1.5 focus:ring-1 focus:ring-blue-500">
+              </div>
+              <div>
+                <label class="block font-medium text-slate-700 mb-1">Max Failed Decrypts Before Alert</label>
+                <input type="number" id="polMaxDecrypts" min="1" max="10" class="w-full border border-slate-300 rounded-lg px-3 py-1.5 focus:ring-1 focus:ring-blue-500">
+              </div>
+              <div>
+                <label class="block font-medium text-slate-700 mb-1">Download Velocity Spike Limit</label>
+                <input type="number" id="polMaxDownloads" min="3" max="50" class="w-full border border-slate-300 rounded-lg px-3 py-1.5 focus:ring-1 focus:ring-blue-500">
+              </div>
+              <button type="submit" class="w-full py-2 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-lg transition shadow-sm">
+                Save Policy Parameters
+              </button>
+            </form>
+          </div>
+
+          <div class="glass-card p-5 space-y-3">
+            <h3 class="font-bold text-sm text-slate-900">Log &amp; Alert Cleanup</h3>
+            <p class="text-xs text-slate-500">Purge simulated logs or test alerts during software testing sessions.</p>
+            <div class="flex space-x-2">
+              <button onclick="adminDashboard.purge('logs')" class="flex-1 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-semibold rounded-lg border border-slate-300 transition">
+                Purge Logs
+              </button>
+              <button onclick="adminDashboard.purge('resolved_alerts')" class="flex-1 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-semibold rounded-lg border border-slate-300 transition">
+                Purge Resolved
+              </button>
+            </div>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- User Management Table -->
+      <div class="glass-card overflow-hidden">
+        <div class="p-4 border-b border-slate-200/80 bg-slate-50/50 flex items-center justify-between">
+          <h3 class="font-bold text-sm text-slate-900">User Privileges &amp; Account Status</h3>
+          <span class="text-xs text-slate-500">Administrator access management</span>
+        </div>
+        <div class="overflow-x-auto">
+          <table class="w-full text-left text-xs">
+            <thead class="bg-slate-100/70 text-slate-600 uppercase font-semibold border-b border-slate-200">
+              <tr>
+                <th class="px-5 py-3">User Name</th>
+                <th class="px-5 py-3">Email Address</th>
+                <th class="px-5 py-3">Role</th>
+                <th class="px-5 py-3">Security Status</th>
+                <th class="px-5 py-3 text-right">Actions</th>
+              </tr>
+            </thead>
+            <tbody id="userManagementTableBody" class="divide-y divide-slate-200 text-slate-700">
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- Activity Audit Logs Explorer -->
+      <div class="glass-card overflow-hidden">
+        <div class="p-4 border-b border-slate-200/80 bg-slate-50/50 flex flex-wrap items-center justify-between gap-3">
+          <div>
+            <h3 class="font-bold text-sm text-slate-900">System Activity &amp; Audit Logs</h3>
+            <p class="text-xs text-slate-500">Cryptographic and authentication audit trail</p>
+          </div>
+          <div class="flex items-center space-x-2">
+            <select id="logActionFilter" onchange="adminDashboard.loadLogs()" class="text-xs border border-slate-300 rounded-lg px-2.5 py-1.5 bg-white">
+              <option value="all">All Actions</option>
+              <option value="LOGIN_SUCCESS">LOGIN_SUCCESS</option>
+              <option value="LOGIN_FAILED">LOGIN_FAILED</option>
+              <option value="ACCOUNT_LOCKED">ACCOUNT_LOCKED</option>
+              <option value="FILE_UPLOADED">FILE_UPLOADED</option>
+              <option value="DECRYPT_SUCCESS">DECRYPT_SUCCESS</option>
+              <option value="DECRYPT_FAILURE">DECRYPT_FAILURE</option>
+              <option value="UNAUTHORIZED_ACCESS_ATTEMPT">UNAUTHORIZED_ACCESS</option>
+            </select>
+            <button onclick="adminDashboard.loadLogs()" class="px-3 py-1.5 bg-white border border-slate-300 rounded-lg text-xs font-semibold text-slate-700 hover:bg-slate-50">
+              Refresh
+            </button>
+          </div>
+        </div>
+        <div class="overflow-x-auto max-h-96 overflow-y-auto">
+          <table class="w-full text-left text-xs font-mono">
+            <thead class="bg-slate-100/70 text-slate-600 uppercase font-semibold border-b border-slate-200 sticky top-0 z-10">
+              <tr>
+                <th class="px-4 py-2.5">Timestamp</th>
+                <th class="px-4 py-2.5">User</th>
+                <th class="px-4 py-2.5">Action</th>
+                <th class="px-4 py-2.5">IP</th>
+                <th class="px-4 py-2.5">File Target</th>
+                <th class="px-4 py-2.5">Details</th>
+              </tr>
+            </thead>
+            <tbody id="auditLogsTableBody" class="divide-y divide-slate-200 text-slate-700 text-[11px]">
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+    </section>
+
+    <!-- ================= VIEW 4: SECURITY GUIDE ================= -->
+    <section id="view-guide" class="view-content hidden space-y-6 max-w-4xl mx-auto">
+      <div>
+        <h1 class="text-2xl font-bold text-slate-900">Security Architecture &amp; Protection Overview</h1>
+        <p class="text-sm text-slate-500 mt-1">A transparent guide to our cryptographic implementation and threat monitoring engine.</p>
+      </div>
+
+      <div class="glass-card p-6 sm:p-8 space-y-3">
+        <div class="w-10 h-10 rounded-xl bg-blue-100 text-blue-600 flex items-center justify-center font-bold text-lg">
+          🔒
+        </div>
+        <h2 class="text-lg font-bold text-slate-900">1. Authenticated Encryption with Associated Data (AEAD)</h2>
+        <p class="text-sm text-slate-600 leading-relaxed">
+          Traditional file transfers often use unauthenticated encryption modes that remain vulnerable to bit-flipping attacks. CipherDrop implements authenticated encryption with a dedicated 128-bit authentication tag, guaranteeing both mathematical confidentiality and data integrity.
+        </p>
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 text-xs pt-2">
+          <div class="bg-slate-50/80 p-4 rounded-xl border border-slate-200">
+            <span class="font-bold text-slate-800">Unique Per-File Keys:</span>
+            <p class="text-slate-500 mt-1">Each file upload generates a random 32-byte cryptographic salt and computes a unique 256-bit key via PBKDF2 (100,000 rounds). Keys are never shared across files.</p>
+          </div>
+          <div class="bg-slate-50/80 p-4 rounded-xl border border-slate-200">
+            <span class="font-bold text-slate-800">Tamper-Proof Verification:</span>
+            <p class="text-slate-500 mt-1">If even a single byte of the stored file is modified on disk, decryption immediately fails, auto-quarantines the file, and triggers a critical alert.</p>
+          </div>
+        </div>
+      </div>
+
+      <div class="glass-card p-6 sm:p-8 space-y-3">
+        <div class="w-10 h-10 rounded-xl bg-emerald-100 text-emerald-600 flex items-center justify-center font-bold text-lg">
+          🛡️
+        </div>
+        <h2 class="text-lg font-bold text-slate-900">2. Zero Plaintext at Rest</h2>
+        <p class="text-sm text-slate-600 leading-relaxed">
+          When an authorized user uploads a file, it is buffered strictly in volatile memory, encrypted directly, and stored solely as ciphertext (<code class="bg-slate-100 px-1 py-0.5 rounded text-blue-700">.enc</code>). Server disk storage never holds unencrypted plaintext.
+        </p>
+      </div>
+
+      <div class="glass-card p-6 sm:p-8 space-y-3">
+        <div class="w-10 h-10 rounded-xl bg-amber-100 text-amber-600 flex items-center justify-center font-bold text-lg">
+          ⚡
+        </div>
+        <h2 class="text-lg font-bold text-slate-900">3. Continuous Anomaly &amp; Threat Detection</h2>
+        <p class="text-sm text-slate-600 leading-relaxed">
+          Unlike passive cloud storage systems, CipherDrop proactively inspects file access patterns in real time:
+        </p>
+        <ul class="text-xs text-slate-600 space-y-2 list-disc pl-5">
+          <li><strong>Brute-Force Login Defense:</strong> Automatically locks user accounts after 5 failed password attempts and broadcasts an immediate alert.</li>
+          <li><strong>Decryption Tamper Monitoring:</strong> Repeated failed decryptions or checksum mismatches automatically trigger emergency file quarantine to prevent data leaks.</li>
+          <li><strong>Download Velocity Spikes:</strong> High-frequency mass download requests by any account are flagged in real-time.</li>
+          <li><strong>Strict Recipient Authorization:</strong> Only designated recipients are cryptographically permitted to decrypt files. Non-recipient access triggers high-priority alerts.</li>
+        </ul>
+      </div>
+
+      <div class="glass-card p-6 border-l-4 border-l-blue-600 space-y-2 text-xs text-slate-700">
+        <h3 class="font-bold text-sm text-slate-900">Enterprise Standards Compliance</h3>
+        <p class="leading-relaxed">
+          Built following Zero-Trust security principles, authenticated streaming cryptography, and NIST-recommended key derivation practices to ensure robust data confidentiality and comprehensive auditing.
+        </p>
+      </div>
+    </section>
+
+  </main>
+
+  <!-- ================= TOAST NOTIFICATION CONTAINER ================= -->
+  <div id="toastContainer" class="fixed bottom-5 right-5 z-50 space-y-2 max-w-sm w-full px-4 sm:px-0 pointer-events-none">
+  </div>
+
+  <!-- ================= SLEEK ENTERPRISE CURVED FOOTER ================= -->
+  <footer class="mt-auto py-8 text-xs text-slate-500 text-center px-4">
+    <div class="max-w-7xl mx-auto glass-island rounded-2xl sm:rounded-full px-6 py-3.5 flex flex-col sm:flex-row items-center justify-between gap-2 shadow-sm border border-slate-200/80">
+      <div class="font-semibold text-slate-700 flex items-center space-x-2">
+        <span class="w-2 h-2 rounded-full bg-emerald-500"></span>
+        <span>CipherDrop Platform &copy; 2026</span>
+      </div>
+      <div class="text-slate-400 font-medium">
+        Enterprise-grade zero-trust file transfer with continuous threat intelligence.
+      </div>
+    </div>
+  </footer>
+
+  <!-- Scripts -->
+  <script src="/js/api.js"></script>
+  <script src="/js/upload.js"></script>
+  <script src="/js/transfers.js"></script>
+  <script src="/js/dashboard.js"></script>
+  <script src="/js/app.js"></script>
+</body>
+</html>
