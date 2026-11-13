@@ -230,6 +230,38 @@ router.post('/users/unlock/:userId', async (req, res) => {
 });
 
 /**
+ * DELETE /api/admin/users/:userId
+ * Delete a user account (cannot delete self/Administrator)
+ */
+router.delete('/users/:userId', async (req, res) => {
+  try {
+    const user = await User.findById(req.params.userId);
+    if (!user) {
+      return res.status(404).json({ success: false, message: 'User not found' });
+    }
+    if (user.role === 'Administrator') {
+      return res.status(400).json({ success: false, message: 'Cannot delete an Administrator account.' });
+    }
+    if (user._id.toString() === req.user.id) {
+      return res.status(400).json({ success: false, message: 'Cannot delete your own account.' });
+    }
+
+    await User.findByIdAndDelete(req.params.userId);
+
+    await threatMonitor.logActivity({
+      userId: req.user.id,
+      userEmail: req.user.email,
+      action: 'ADMIN_USER_DELETED',
+      details: { deletedEmail: user.email }
+    });
+
+    res.json({ success: true, message: `User ${user.email} removed successfully.` });
+  } catch (err) {
+    res.status(500).json({ success: false, message: err.message });
+  }
+});
+
+/**
  * POST /api/admin/users/role/:userId
  * Change user role
  */

@@ -226,6 +226,8 @@ const uploadWizard = {
     this.selectedRecipientId = null;
     this.selectedRecipientName = null;
     this.selectedRecipientEmail = null;
+    const btnNext2 = document.getElementById('btn-next-2');
+    if (btnNext2) btnNext2.setAttribute('disabled', 'true');
     this.setStep(1);
   },
 

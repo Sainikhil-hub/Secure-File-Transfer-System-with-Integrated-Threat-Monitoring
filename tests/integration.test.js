@@ -136,7 +136,7 @@ async function runIntegrationTests() {
     
     // Create multipart/form-data payload manually
     const boundary = '--------------------------' + Date.now().toString(16);
-    const fileContent = 'Amity University Rajasthan - Confidential Research Lab BCS 502';
+    const fileContent = 'CipherDrop Enterprise Secure Test Transfer Payload';
     const postData = [
       `--${boundary}`,
       `Content-Disposition: form-data; name="recipientId"`,
@@ -207,6 +207,29 @@ async function runIntegrationTests() {
     }, adminToken);
     assert.strictEqual(simRes.status, 200);
     console.log(`   ✅ Threat Simulation executed: ${simRes.data.message}`);
+
+    // Cleanup temporary test users and files so database stays 100% clean
+    try {
+      const mongoose = require('mongoose');
+      const config = require('../backend/config');
+      if (mongoose.connection.readyState === 0) {
+        await mongoose.connect(config.mongodbUri);
+      }
+      const User = require('../backend/models/User');
+      const FileRecord = require('../backend/models/FileRecord');
+      const ShareRecord = require('../backend/models/ShareRecord');
+      const Alert = require('../backend/models/Alert');
+      const ActivityLog = require('../backend/models/ActivityLog');
+      await User.deleteMany({ email: { $in: [testEmail, unauthorizedEmail] } });
+      await FileRecord.deleteMany({ fileId: uploadedFileId });
+      await ShareRecord.deleteMany({ fileId: uploadedFileId });
+      await Alert.deleteMany({ targetUser: testEmail });
+      await ActivityLog.deleteMany({ userEmail: { $in: [testEmail, unauthorizedEmail] } });
+      const diskPath = path.join(config.uploadDir, `${uploadedFileId}.enc`);
+      if (fs.existsSync(diskPath)) fs.unlinkSync(diskPath);
+    } catch {
+      // ignore
+    }
 
     console.log('\n====================================================');
     console.log('🎉 ALL INTEGRATION & SRS REQUIREMENTS TESTS PASSED!');

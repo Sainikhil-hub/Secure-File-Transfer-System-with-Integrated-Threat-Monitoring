@@ -42,8 +42,8 @@ async function runSecurityTests() {
 
   // 1. Key Derivation & AES-256-GCM authenticated encryption
   await asyncTest('AES-256-GCM: Encrypt and decrypt maintains bit-for-bit fidelity', async () => {
-    const cryptoEngine = require('../services/cryptoEngine');
-    const originalText = 'Confidential Project Transfer Payload - 2026 BCS 502';
+    const cryptoEngine = require('../backend/services/cryptoEngine');
+    const originalText = 'Confidential Enterprise Transfer Payload - CipherDrop 2026';
     const originalBuffer = Buffer.from(originalText, 'utf-8');
     const testFileId = 'test-file-' + Date.now();
 
@@ -55,7 +55,7 @@ async function runSecurityTests() {
     assert.strictEqual(encResult.salt.length, 64); // 32 bytes = 64 hex chars
 
     // Check plaintext is NOT written to storage
-    const storedPath = path.join(require('../config').uploadDir, encResult.storedFileName);
+    const storedPath = path.join(require('../backend/config').uploadDir, encResult.storedFileName);
     assert(fs.existsSync(storedPath), 'Encrypted file should exist on disk');
     const diskContent = fs.readFileSync(storedPath);
     assert.notStrictEqual(diskContent.toString('utf-8'), originalText, 'Stored file must NEVER be plaintext');
@@ -79,12 +79,12 @@ async function runSecurityTests() {
 
   // 2. AES-256-GCM Tamper Detection (AEAD property)
   await asyncTest('AES-256-GCM AEAD: Ciphertext tampering is immediately detected & rejected', async () => {
-    const cryptoEngine = require('../services/cryptoEngine');
-    const originalBuffer = Buffer.from('Highly Secure Academic Records - Amity University', 'utf-8');
+    const cryptoEngine = require('../backend/services/cryptoEngine');
+    const originalBuffer = Buffer.from('Highly Secure Corporate Records - CipherDrop Platform', 'utf-8');
     const testFileId = 'tamper-test-' + Date.now();
 
     const encResult = await cryptoEngine.encryptAndStore(originalBuffer, testFileId);
-    const storedPath = path.join(require('../config').uploadDir, encResult.storedFileName);
+    const storedPath = path.join(require('../backend/config').uploadDir, encResult.storedFileName);
 
     // Flip 1 byte in the ciphertext on disk (simulating an attacker modifying bytes)
     const diskData = fs.readFileSync(storedPath);
@@ -118,7 +118,7 @@ async function runSecurityTests() {
 
   // 3. Prohibited Executable Extension Inspection
   test('Threat Inspection: Disallowed executable scripts/binaries are intercepted', () => {
-    const threatMonitor = require('../services/threatMonitor');
+    const threatMonitor = require('../backend/services/threatMonitor');
     assert.strictEqual(threatMonitor.isDisallowedFileType('payload.exe'), true);
     assert.strictEqual(threatMonitor.isDisallowedFileType('script.bat'), true);
     assert.strictEqual(threatMonitor.isDisallowedFileType('exploit.sh'), true);
@@ -129,7 +129,7 @@ async function runSecurityTests() {
 
   // 4. SHA-256 Checksum Verification
   test('Integrity Checksum: SHA-256 uniquely hashes content', () => {
-    const cryptoEngine = require('../services/cryptoEngine');
+    const cryptoEngine = require('../backend/services/cryptoEngine');
     const b1 = Buffer.from('Sample Data A');
     const b2 = Buffer.from('Sample Data B');
     const hash1 = cryptoEngine.computeChecksum(b1);

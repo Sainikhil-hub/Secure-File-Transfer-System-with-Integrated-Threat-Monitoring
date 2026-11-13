@@ -38,10 +38,81 @@ const app = {
 
     // Window resize handler to auto-close mobile drawer if expanded
     window.addEventListener('resize', () => {
-      if (window.innerWidth >= 768 && this.mobileMenuOpen) {
+      if (window.innerWidth >= 1024 && this.mobileMenuOpen) {
         this.closeMobileMenu();
       }
     });
+
+    // Close persona dropdown on outside click
+    document.addEventListener('click', (e) => {
+      const container = document.getElementById('personaDropdownContainer');
+      if (container && !container.contains(e.target)) {
+        this.closePersonaDropdown();
+      }
+    });
+  },
+
+  // Toggle Persona Dropdown menu with Downward Arrow
+  togglePersonaDropdown(e) {
+    if (e) e.stopPropagation();
+    const menu = document.getElementById('personaDropdownMenu');
+    const chevron = document.getElementById('personaChevron');
+    if (!menu) return;
+    const isHidden = menu.classList.contains('hidden');
+    if (isHidden) {
+      menu.classList.remove('hidden');
+      if (chevron) chevron.classList.add('rotate-180');
+    } else {
+      menu.classList.add('hidden');
+      if (chevron) chevron.classList.remove('rotate-180');
+    }
+  },
+
+  closePersonaDropdown() {
+    const menu = document.getElementById('personaDropdownMenu');
+    const chevron = document.getElementById('personaChevron');
+    if (menu) menu.classList.add('hidden');
+    if (chevron) chevron.classList.remove('rotate-180');
+  },
+
+  // Google Sign-In Modal Management
+  showGoogleSignInModal() {
+    const modal = document.getElementById('googleSignInModal');
+    if (modal) modal.classList.remove('hidden');
+  },
+
+  closeGoogleSignInModal() {
+    const modal = document.getElementById('googleSignInModal');
+    if (modal) modal.classList.add('hidden');
+  },
+
+  async authenticateWithGoogle(email, name) {
+    this.closeGoogleSignInModal();
+    try {
+      const res = await api.loginWithGoogle(email, name);
+      api.setToken(res.token);
+      api.setUser(res.user);
+      if (typeof uploadWizard !== 'undefined') uploadWizard.reset();
+      this.updateUserUI(res.user);
+      this.showToast(`Signed in with Google as ${res.user.name}`, 'success');
+
+      if (res.user.role === 'Administrator') {
+        this.navigate('admin');
+      } else {
+        this.navigate('upload');
+      }
+    } catch (err) {
+      this.showToast(err.message || 'Google sign-in failed', 'error');
+    }
+  },
+
+  async handleCustomGoogleAuth(e) {
+    e.preventDefault();
+    const emailInput = document.getElementById('customGoogleEmail');
+    const email = (emailInput ? emailInput.value : '').trim();
+    if (!email) return;
+    const name = email.split('@')[0];
+    await this.authenticateWithGoogle(email, name);
   },
 
   handleLogoClick() {
@@ -125,7 +196,9 @@ const app = {
     }
 
     // Trigger view-specific loads
-    if (viewId === 'transfers') {
+    if (viewId === 'upload') {
+      uploadWizard.reset();
+    } else if (viewId === 'transfers') {
       transfersManager.setTab('received');
     } else if (viewId === 'admin') {
       adminDashboard.refreshAll();
@@ -135,27 +208,59 @@ const app = {
   updateUserUI(user) {
     const mainNav = document.getElementById('mainNav');
     const desktopRightBar = document.getElementById('desktopRightBar');
-    const desktopPersonaSwitcher = document.getElementById('desktopPersonaSwitcher');
     const userSection = document.getElementById('userSection');
+    const mobileHeaderUserChip = document.getElementById('mobileHeaderUserChip');
     const navAdmin = document.getElementById('nav-admin');
     const mobileNavLinks = document.getElementById('mobileNavLinks');
     const mobileNavAdmin = document.getElementById('mobile-nav-admin');
     const mobileUserInfo = document.getElementById('mobileUserInfo');
     const mobileAuthBtn = document.getElementById('mobileAuthBtn');
+    const currentRoleIcon = document.getElementById('currentRoleIcon');
+    const currentRoleName = document.getElementById('currentRoleName');
+
+    // Close any open persona dropdown
+    this.closePersonaDropdown();
 
     if (user) {
-      // Authenticated: show navigation tabs & user controls
+      // ── Authenticated: show navigation tabs & user controls ──
       if (mainNav) {
-        mainNav.classList.remove('hidden');
-        mainNav.classList.add('flex');
+        mainNav.className = 'hidden lg:flex items-center space-x-1 bg-slate-100/90 p-1 rounded-full border border-slate-200/80 flex-shrink-0 min-w-0';
       }
       if (desktopRightBar) {
-        desktopRightBar.classList.remove('hidden');
-        desktopRightBar.classList.add('md:flex');
+        desktopRightBar.className = 'hidden lg:flex items-center space-x-2 flex-shrink-0';
       }
       if (mobileNavLinks) {
         mobileNavLinks.classList.remove('hidden');
         mobileNavLinks.classList.add('grid');
+      }
+
+      // Compact user chip on top bar for small/minimized screens (< lg)
+      if (mobileHeaderUserChip) {
+        const avatarLetter = (user.name || 'U').charAt(0).toUpperCase();
+        mobileHeaderUserChip.innerHTML = `
+          <div class="flex items-center space-x-1.5 bg-slate-100/90 px-2 py-1 rounded-full border border-slate-200 shadow-sm">
+            <div class="w-5 h-5 rounded-full bg-blue-600 text-white font-bold flex items-center justify-center text-[10px] shadow-sm flex-shrink-0">
+              ${avatarLetter}
+            </div>
+            <span class="text-[11px] font-bold text-slate-800 truncate max-w-[60px] sm:max-w-[80px]">${(user.name || '').split(' ')[0]}</span>
+          </div>
+        `;
+        mobileHeaderUserChip.classList.remove('hidden');
+        mobileHeaderUserChip.classList.add('flex');
+      }
+
+      // Update Persona Dropdown Label & Icon
+      if (currentRoleIcon && currentRoleName) {
+        if (user.role === 'Administrator') {
+          currentRoleIcon.textContent = '👑';
+          currentRoleName.textContent = 'Admin';
+        } else if (user.role === 'Staff') {
+          currentRoleIcon.textContent = '💼';
+          currentRoleName.textContent = 'Staff';
+        } else {
+          currentRoleIcon.textContent = '👤';
+          currentRoleName.textContent = 'User';
+        }
       }
 
       // Admin tab visibility
@@ -179,25 +284,22 @@ const app = {
         }
       }
 
-      // Desktop User Info & Logout Button
+      // Desktop User Info & Logout Button (Compact, within the curved island boundary)
       if (userSection) {
         const avatarLetter = (user.name || 'U').charAt(0).toUpperCase();
-        let roleBadgeColor = 'bg-slate-100 text-slate-700 border-slate-200';
-        if (user.role === 'Administrator') roleBadgeColor = 'bg-amber-100 text-amber-800 border-amber-200';
-        else if (user.role === 'Staff') roleBadgeColor = 'bg-indigo-100 text-indigo-800 border-indigo-200';
 
         userSection.innerHTML = `
-          <div class="flex items-center space-x-2 flex-shrink-0">
-            <div class="flex items-center space-x-2 bg-slate-50 hover:bg-slate-100/90 px-2.5 py-1 rounded-full border border-slate-200/90 transition shadow-sm">
+          <div class="flex items-center space-x-1.5 sm:space-x-2 flex-shrink-0">
+            <div class="flex items-center space-x-1.5 sm:space-x-2 bg-slate-50 hover:bg-slate-100/90 px-2 sm:px-2.5 py-1 rounded-full border border-slate-200 transition shadow-sm">
               <div class="w-6 h-6 rounded-full bg-gradient-to-tr from-blue-600 via-indigo-600 to-blue-500 text-white flex items-center justify-center font-bold text-[11px] shadow-sm flex-shrink-0">
                 ${avatarLetter}
               </div>
-              <div class="flex flex-col text-left leading-none max-w-[90px]">
+              <div class="flex flex-col text-left leading-none max-w-[70px] sm:max-w-[95px]">
                 <span class="text-xs font-bold text-slate-800 truncate whitespace-nowrap" title="${user.name}">${user.name}</span>
                 <span class="text-[9px] text-slate-400 font-medium whitespace-nowrap mt-0.5">${user.role}</span>
               </div>
             </div>
-            <button onclick="app.logout()" class="px-3 py-1 rounded-full border border-slate-200 bg-white hover:bg-rose-50 hover:border-rose-200 hover:text-rose-600 text-xs font-medium text-slate-600 transition shadow-sm whitespace-nowrap" title="Sign out">
+            <button onclick="app.logout()" class="px-2.5 sm:px-3 py-1 rounded-full border border-slate-200 bg-white hover:bg-rose-50 hover:border-rose-200 hover:text-rose-600 text-xs font-semibold text-slate-600 transition shadow-sm whitespace-nowrap flex-shrink-0 cursor-pointer" title="Sign out of CipherDrop">
               Sign Out
             </button>
           </div>
@@ -219,19 +321,22 @@ const app = {
           </div>
         `;
         mobileAuthBtn.textContent = 'Sign Out';
-        mobileAuthBtn.className = 'px-3.5 py-1.5 rounded-full text-xs font-semibold bg-slate-100 hover:bg-slate-200 text-slate-700 transition';
+        mobileAuthBtn.className = 'px-3.5 py-1.5 rounded-full text-xs font-semibold bg-slate-100 hover:bg-slate-200 text-slate-700 transition cursor-pointer';
         mobileAuthBtn.onclick = () => { app.logout(); app.closeMobileMenu(); };
       }
 
     } else {
-      // Unauthenticated: hide all internal navigation
+      // ── Unauthenticated: hide internal tabs & controls ──
       if (mainNav) {
-        mainNav.classList.add('hidden');
-        mainNav.classList.remove('flex');
+        mainNav.className = 'hidden items-center space-x-1 bg-slate-100/90 p-1 rounded-full border border-slate-200/80 flex-shrink-0 min-w-0';
       }
       if (desktopRightBar) {
-        desktopRightBar.classList.add('hidden');
-        desktopRightBar.classList.remove('md:flex');
+        desktopRightBar.className = 'hidden items-center space-x-2 flex-shrink-0';
+      }
+      if (mobileHeaderUserChip) {
+        mobileHeaderUserChip.innerHTML = '';
+        mobileHeaderUserChip.classList.add('hidden');
+        mobileHeaderUserChip.classList.remove('flex');
       }
       if (mobileNavLinks) {
         mobileNavLinks.classList.add('hidden');
@@ -247,18 +352,13 @@ const app = {
       }
 
       if (userSection) {
-        userSection.innerHTML = `
-          <div class="flex items-center space-x-1.5 text-xs text-slate-500 font-medium bg-slate-100 px-3 py-1 rounded-full border border-slate-200">
-            <span class="w-2 h-2 rounded-full bg-blue-500 animate-pulse"></span>
-            <span>Authentication Gateway</span>
-          </div>
-        `;
+        userSection.innerHTML = '';
       }
 
       if (mobileUserInfo && mobileAuthBtn) {
         mobileUserInfo.innerHTML = `<span class="text-slate-500 text-xs">Please sign in to transfer files</span>`;
         mobileAuthBtn.textContent = 'Sign In';
-        mobileAuthBtn.className = 'px-3 py-1.5 rounded-lg text-xs font-semibold bg-blue-600 text-white shadow-sm';
+        mobileAuthBtn.className = 'px-3 py-1.5 rounded-lg text-xs font-semibold bg-blue-600 text-white shadow-sm cursor-pointer';
         mobileAuthBtn.onclick = () => { app.navigate('landing-login'); app.closeMobileMenu(); };
       }
     }
@@ -328,6 +428,7 @@ const app = {
 
       api.setToken(res.token);
       api.setUser(res.user);
+      if (typeof uploadWizard !== 'undefined') uploadWizard.reset();
       this.updateUserUI(res.user);
       this.showToast(`Welcome, ${res.user.name}!`, 'success');
 
@@ -349,31 +450,138 @@ const app = {
     }
   },
 
-  async quickLogin(role) {
+  // Fill standard credentials in landing login card so user can verify and submit
+  fillLoginCredentials(role) {
+    if (this.landingAuthMode === 'register') {
+      this.toggleLandingAuthMode();
+    }
+    const emailInput = document.getElementById('landingEmail');
+    const passInput = document.getElementById('landingPassword');
+    const submitBtn = document.getElementById('landingSubmitBtn');
+
+    if (role === 'Administrator') {
+      if (emailInput) emailInput.value = 'admin@securetransfer.local';
+      if (passInput) passInput.value = 'Admin@12345';
+    } else if (role === 'Staff') {
+      if (emailInput) emailInput.value = 'staff@securetransfer.local';
+      if (passInput) passInput.value = 'Staff@12345';
+    } else {
+      if (emailInput) emailInput.value = 'user@securetransfer.local';
+      if (passInput) passInput.value = 'User@12345';
+    }
+
+    if (passInput) passInput.focus();
+    if (submitBtn) {
+      submitBtn.classList.add('ring-4', 'ring-blue-400/40');
+      setTimeout(() => submitBtn.classList.remove('ring-4', 'ring-blue-400/40'), 1200);
+    }
+  },
+
+  // Open Switch Account Modal (Requires Login Information)
+  openSwitchAccountModal(role = '') {
+    const modal = document.getElementById('switchAccountModal');
+    const emailInput = document.getElementById('switchAccountEmail');
+    const passInput = document.getElementById('switchAccountPassword');
+    const hintPass = document.getElementById('switchAccountHintPass');
+    const errAlert = document.getElementById('switchAccountError');
+
+    if (errAlert) errAlert.classList.add('hidden');
+    if (passInput) passInput.value = '';
+
+    let targetEmail = '';
+    let targetPass = '';
+
+    if (role === 'Administrator') {
+      targetEmail = 'admin@securetransfer.local';
+      targetPass = 'Admin@12345';
+    } else if (role === 'Staff') {
+      targetEmail = 'staff@securetransfer.local';
+      targetPass = 'Staff@12345';
+    } else if (role === 'End User') {
+      targetEmail = 'user@securetransfer.local';
+      targetPass = 'User@12345';
+    }
+
+    if (emailInput) emailInput.value = targetEmail;
+    if (hintPass) hintPass.textContent = targetPass || 'Enter password';
+
+    if (modal) modal.classList.remove('hidden');
+    if (passInput) passInput.focus();
+  },
+
+  closeSwitchAccountModal() {
+    const modal = document.getElementById('switchAccountModal');
+    if (modal) modal.classList.add('hidden');
+  },
+
+  fillSwitchAccountPassword() {
+    const hint = document.getElementById('switchAccountHintPass');
+    const passInput = document.getElementById('switchAccountPassword');
+    if (hint && passInput && hint.textContent !== 'Enter password') {
+      passInput.value = hint.textContent;
+      passInput.focus();
+    }
+  },
+
+  async handleSwitchAccountSubmit(e) {
+    e.preventDefault();
+    const errAlert = document.getElementById('switchAccountError');
+    const errText = document.getElementById('switchAccountErrorText');
+    const submitBtn = document.getElementById('switchAccountSubmitBtn');
+    const emailInput = document.getElementById('switchAccountEmail');
+    const passInput = document.getElementById('switchAccountPassword');
+
+    if (errAlert) errAlert.classList.add('hidden');
+
+    const email = (emailInput ? emailInput.value : '').trim();
+    const password = passInput ? passInput.value : '';
+
+    if (!email || !password) return;
+
+    const originalText = submitBtn.innerHTML;
+    submitBtn.setAttribute('disabled', 'true');
+    submitBtn.innerHTML = `<span>Verifying credentials...</span>`;
+
     try {
-      const res = await api.quickDemoLogin(role);
+      const res = await api.login(email, password);
       api.setToken(res.token);
       api.setUser(res.user);
-      this.updateUserUI(res.user);
-      this.showToast(`Logged in as ${res.user.name} (${role})`, 'success');
+      
+      // Clean reset upload state on user switch
+      if (typeof uploadWizard !== 'undefined') {
+        uploadWizard.reset();
+      }
 
-      if (role === 'Administrator') {
+      this.updateUserUI(res.user);
+      this.closeSwitchAccountModal();
+      this.showToast(`Switched account: ${res.user.name} (${res.user.role})`, 'success');
+
+      if (res.user.role === 'Administrator') {
         this.navigate('admin');
       } else {
         this.navigate('upload');
       }
     } catch (err) {
+      if (errAlert && errText) {
+        errText.textContent = err.message || 'Authentication failed. Please check credentials.';
+        errAlert.classList.remove('hidden');
+      }
       this.showToast(err.message, 'error');
+    } finally {
+      submitBtn.removeAttribute('disabled');
+      submitBtn.innerHTML = originalText;
     }
-  },
-
-  async quickSwitch(role) {
-    await this.quickLogin(role);
   },
 
   logout() {
     api.setToken(null);
     api.setUser(null);
+    
+    // Always reset upload wizard on sign out
+    if (typeof uploadWizard !== 'undefined') {
+      uploadWizard.reset();
+    }
+
     this.updateUserUI(null);
     this.navigate('landing-login');
     this.showToast('You have been signed out.', 'info');

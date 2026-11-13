@@ -1,5 +1,5 @@
 const path = require('path');
-require('dotenv').config({ path: path.join(__dirname, '..', '.env') });
+require('dotenv').config({ path: path.join(__dirname, '..', '..', '.env') });
 
 module.exports = {
   port: parseInt(process.env.PORT, 10) || 5000,
@@ -7,7 +7,7 @@ module.exports = {
   jwtSecret: process.env.JWT_SECRET || 'fallback-secret-development-key-321',
   jwtExpiresIn: '24h',
   masterEncryptionKey: process.env.MASTER_ENCRYPTION_KEY || 'a89f3c1d94f2740bc18a77919327e51c89304721948dbf381c04859aefb20491',
-  uploadDir: path.resolve(__dirname, '..', process.env.UPLOAD_DIR || 'uploads/encrypted'),
+  uploadDir: path.resolve(__dirname, '..', '..', process.env.UPLOAD_DIR || 'uploads/encrypted'),
   maxFileSizeMb: parseInt(process.env.MAX_FILE_SIZE_MB, 10) || 100,
   
   // Security thresholds (per SRS Section 4 & 5)

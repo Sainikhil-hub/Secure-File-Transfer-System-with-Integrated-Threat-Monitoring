@@ -68,6 +68,13 @@ const api = {
     });
   },
 
+  loginWithGoogle(email, name) {
+    return this.request('/api/auth/google', {
+      method: 'POST',
+      body: JSON.stringify({ email, name })
+    });
+  },
+
   register(name, email, password, role) {
     return this.request('/api/auth/register', {
       method: 'POST',

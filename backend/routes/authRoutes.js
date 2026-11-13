@@ -193,6 +193,78 @@ router.get('/users', verifyToken, async (req, res) => {
 });
 
 /**
+ * POST /api/auth/google
+ * Authenticate or register with Google OAuth / Gmail account
+ */
+router.post('/google', async (req, res) => {
+  try {
+    let { email, name } = req.body;
+    if (!email) {
+      return res.status(400).json({ success: false, message: 'Google account email is required.' });
+    }
+    
+    email = email.toLowerCase().trim();
+    name = (name || email.split('@')[0]).trim();
+    const ip = req.ip || req.connection.remoteAddress || '127.0.0.1';
+
+    let user = await User.findOne({ email });
+    if (!user) {
+      // Auto-register new Google user with a secure random 32-char password
+      const crypto = require('crypto');
+      const randomPassword = crypto.randomBytes(16).toString('hex') + 'A1!';
+      user = new User({
+        name,
+        email,
+        password: randomPassword,
+        role: 'End User'
+      });
+      await user.save();
+
+      await threatMonitor.logActivity({
+        userId: user._id,
+        userEmail: user.email,
+        action: 'GOOGLE_REGISTER',
+        ipAddress: ip,
+        severity: 'info',
+        details: { provider: 'Google', role: user.role }
+      });
+    } else {
+      if (user.isLocked) {
+        const remainingMinutes = Math.ceil((user.lockoutUntil - Date.now()) / (60 * 1000));
+        return res.status(423).json({
+          success: false,
+          message: `Account is temporarily locked. Try again in ${remainingMinutes} minute(s).`
+        });
+      }
+
+      user.failedLoginAttempts = 0;
+      user.lockoutUntil = null;
+      await user.save();
+    }
+
+    await threatMonitor.recordSuccessfulLogin(user, ip);
+    await threatMonitor.logActivity({
+      userId: user._id,
+      userEmail: user.email,
+      action: 'GOOGLE_LOGIN_SUCCESS',
+      ipAddress: ip,
+      severity: 'info',
+      details: { provider: 'Google' }
+    });
+
+    const token = generateToken(user);
+    res.json({
+      success: true,
+      message: 'Signed in with Google successfully.',
+      token,
+      user: user.toSafeObject()
+    });
+  } catch (err) {
+    res.status(500).json({ success: false, message: err.message });
+  }
+});
+
+/**
  * POST /api/auth/quick-demo-login
  * For lab evaluations, quick switch between demo personas
  */

@@ -39,23 +39,23 @@
 
   <!-- ================= TOP FLOATING CURVED ISLAND NAVIGATION BAR ================= -->
   <header class="sticky top-2 sm:top-4 z-50 px-3 sm:px-6 lg:px-8 max-w-7xl mx-auto w-full transition-all duration-300">
-    <div class="glass-island px-4 sm:px-5 py-2.5 rounded-2xl sm:rounded-full flex items-center justify-between gap-3 relative overflow-hidden">
+    <div class="glass-island px-3 sm:px-5 py-2.5 rounded-2xl sm:rounded-full flex items-center justify-between gap-2 sm:gap-3 relative">
       
       <!-- Brand Logo with Curved Gradient Icon -->
-      <div class="flex items-center space-x-2.5 cursor-pointer group flex-shrink-0" onclick="app.handleLogoClick()">
-        <div class="w-9 h-9 rounded-full bg-gradient-to-tr from-blue-700 via-blue-600 to-indigo-500 flex items-center justify-center text-white shadow-md shadow-blue-500/25 group-hover:scale-105 transition-transform duration-200">
+      <div class="flex items-center space-x-2 sm:space-x-2.5 cursor-pointer group flex-shrink-0" onclick="app.handleLogoClick()">
+        <div class="w-8 h-8 sm:w-9 sm:h-9 rounded-full bg-gradient-to-tr from-blue-700 via-blue-600 to-indigo-500 flex items-center justify-center text-white shadow-md shadow-blue-500/25 group-hover:scale-105 transition-transform duration-200">
           <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/>
           </svg>
         </div>
         <div class="flex flex-col">
           <span class="font-extrabold text-base sm:text-lg tracking-tight text-slate-900 group-hover:text-blue-600 transition-colors leading-none">CipherDrop</span>
-          <span class="text-[10px] text-slate-400 font-medium hidden sm:block mt-1 leading-none">Secure Transfer</span>
+          <span class="text-[10px] text-slate-400 font-medium hidden sm:block mt-0.5 leading-none">Secure Transfer</span>
         </div>
       </div>
 
-      <!-- Center: Desktop Navigation Tabs (Visible only when logged in via JS) -->
-      <nav id="mainNav" class="hidden items-center space-x-1 bg-slate-100/80 p-1 rounded-full border border-slate-200/80 flex-shrink-0 min-w-0">
+      <!-- Center: Desktop Navigation Tabs (Visible only when logged in on large screens) -->
+      <nav id="mainNav" class="hidden items-center space-x-1 bg-slate-100/90 p-1 rounded-full border border-slate-200/80 flex-shrink-0 min-w-0">
         <button onclick="app.navigate('upload')" id="nav-upload" class="nav-tab px-3 py-1.5 rounded-full text-xs font-semibold whitespace-nowrap text-blue-600 bg-white shadow-sm transition">
           Send Files
         </button>
@@ -66,47 +66,87 @@
           <span>Threat Center</span>
           <span class="text-[9px] uppercase font-bold bg-amber-500 text-white px-1.5 py-0.5 rounded-full leading-none">Admin</span>
         </button>
-        <button onclick="app.navigate('guide')" id="nav-guide" class="nav-tab px-3 py-1.5 rounded-full text-xs font-medium whitespace-nowrap text-slate-600 hover:text-slate-900 hover:bg-white/60 transition hidden lg:inline-flex">
+        <button onclick="app.navigate('guide')" id="nav-guide" class="nav-tab px-3 py-1.5 rounded-full text-xs font-medium whitespace-nowrap text-slate-600 hover:text-slate-900 hover:bg-white/60 transition hidden xl:inline-flex">
           Security Guide
         </button>
       </nav>
 
-      <!-- Right Action Items — controlled entirely by JS, hidden by default -->
+      <!-- Right Action Items (Visible only when logged in on large screens >= lg) -->
       <div id="desktopRightBar" class="hidden items-center space-x-2 flex-shrink-0">
-        <!-- Live Threat Beacon Status -->
-        <div id="liveMonitorStatus" class="hidden xl:flex items-center space-x-1.5 px-3 py-1 rounded-full text-xs font-medium bg-emerald-50 text-emerald-700 border border-emerald-200/80 shadow-sm whitespace-nowrap">
+        <!-- Live Threat Beacon Status (2xl+ screens) -->
+        <div id="liveMonitorStatus" class="hidden 2xl:flex items-center space-x-1.5 px-3 py-1 rounded-full text-xs font-medium bg-emerald-50 text-emerald-700 border border-emerald-200/80 shadow-sm whitespace-nowrap">
           <span class="live-beacon"></span>
           <span class="text-[11px] font-semibold">Shield Active</span>
         </div>
 
-        <!-- Quick Persona Switcher (Curved Capsule) — only on xl screens -->
-        <div id="desktopPersonaSwitcher" class="hidden xl:flex items-center bg-slate-100/90 p-0.5 rounded-full border border-slate-200 text-xs font-medium text-slate-600">
-          <button onclick="app.quickSwitch('Administrator')" class="px-2 py-1 rounded-full hover:bg-white hover:text-slate-900 transition text-[11px] whitespace-nowrap font-medium" title="Switch to Admin">
-            👑 Admin
+        <!-- Role / Persona Dropdown with Downward Arrow -->
+        <div class="relative" id="personaDropdownContainer">
+          <button id="personaDropdownBtn" onclick="app.togglePersonaDropdown(event)" type="button" class="flex items-center space-x-1.5 px-2.5 sm:px-3 py-1.5 rounded-full bg-slate-100 hover:bg-slate-200/90 border border-slate-200 text-xs font-medium text-slate-700 transition shadow-sm cursor-pointer" title="Switch Account Role">
+            <span id="currentRoleBadge" class="flex items-center space-x-1">
+              <span id="currentRoleIcon">👑</span>
+              <span id="currentRoleName" class="font-semibold text-slate-800 text-[11px] sm:text-xs">Admin</span>
+            </span>
+            <!-- Downward Arrow SVG -->
+            <svg id="personaChevron" class="w-3.5 h-3.5 text-slate-500 transition-transform duration-200" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M19 9l-7 7-7-7"/>
+            </svg>
           </button>
-          <button onclick="app.quickSwitch('Staff')" class="px-2 py-1 rounded-full hover:bg-white hover:text-slate-900 transition text-[11px] whitespace-nowrap font-medium" title="Switch to Staff">
-            💼 Staff
-          </button>
-          <button onclick="app.quickSwitch('End User')" class="px-2 py-1 rounded-full hover:bg-white hover:text-slate-900 transition text-[11px] whitespace-nowrap font-medium" title="Switch to User">
-            👤 User
-          </button>
+
+          <!-- Dropdown Card -->
+          <div id="personaDropdownMenu" class="hidden absolute right-0 mt-2 w-56 bg-white rounded-2xl shadow-2xl border border-slate-200 py-1.5 z-50 transition-all origin-top-right">
+            <div class="px-3 py-1 text-[10px] font-bold uppercase tracking-wider text-slate-400 border-b border-slate-100">Switch Account</div>
+            <button onclick="app.openSwitchAccountModal('Administrator'); app.closePersonaDropdown();" class="w-full text-left px-3.5 py-2 text-xs font-medium text-slate-700 hover:bg-blue-50 hover:text-blue-700 flex items-center space-x-2.5 transition">
+              <span class="text-base">👑</span>
+              <div class="flex flex-col">
+                <span class="font-semibold leading-tight text-slate-800">Administrator</span>
+                <span class="text-[10px] text-slate-400">admin@securetransfer.local</span>
+              </div>
+            </button>
+            <button onclick="app.openSwitchAccountModal('Staff'); app.closePersonaDropdown();" class="w-full text-left px-3.5 py-2 text-xs font-medium text-slate-700 hover:bg-blue-50 hover:text-blue-700 flex items-center space-x-2.5 transition">
+              <span class="text-base">💼</span>
+              <div class="flex flex-col">
+                <span class="font-semibold leading-tight text-slate-800">Staff Operations</span>
+                <span class="text-[10px] text-slate-400">staff@securetransfer.local</span>
+              </div>
+            </button>
+            <button onclick="app.openSwitchAccountModal('End User'); app.closePersonaDropdown();" class="w-full text-left px-3.5 py-2 text-xs font-medium text-slate-700 hover:bg-blue-50 hover:text-blue-700 flex items-center space-x-2.5 transition">
+              <span class="text-base">👤</span>
+              <div class="flex flex-col">
+                <span class="font-semibold leading-tight text-slate-800">End User</span>
+                <span class="text-[10px] text-slate-400">user@securetransfer.local</span>
+              </div>
+            </button>
+            <div class="border-t border-slate-100 mt-1 pt-1">
+              <button onclick="app.openSwitchAccountModal(''); app.closePersonaDropdown();" class="w-full text-left px-3.5 py-1.5 text-xs font-medium text-blue-600 hover:bg-blue-50 flex items-center space-x-2 transition">
+                <span>➕</span>
+                <span>Switch to Other Account...</span>
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <!-- User Section: Avatar + Name + Sign Out Button -->
+        <div id="userSection" class="flex items-center space-x-1.5 sm:space-x-2 flex-shrink-0">
+          <!-- Filled by JS -->
         </div>
       </div>
 
-      <!-- User/Auth Section — always visible, content changes on auth state -->
-      <div id="userSection" class="hidden md:flex items-center space-x-2 flex-shrink-0">
-        <!-- Filled by JS -->
-      </div>
+      <!-- Mobile / Responsive Header Controls (< lg screens, active when minimized) -->
+      <div class="flex items-center space-x-2 lg:hidden">
+        <!-- Compact User chip on minimized laptop / mobile when logged in -->
+        <div id="mobileHeaderUserChip" class="hidden items-center space-x-1.5 flex-shrink-0">
+          <!-- Filled by JS -->
+        </div>
 
-      <!-- Mobile Hamburger Button (< md screens) -->
-      <div class="flex items-center space-x-2 md:hidden">
-        <button id="mobileMenuBtn" onclick="app.toggleMobileMenu()" class="p-2 rounded-full text-slate-600 hover:text-slate-900 hover:bg-slate-100 focus:outline-none transition">
-          <svg id="hamburgerIcon" class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"/>
+        <!-- Prominent Hamburger Menu Button -->
+        <button id="mobileMenuBtn" onclick="app.toggleMobileMenu()" class="p-2 sm:px-3 sm:py-1.5 rounded-full text-slate-700 bg-slate-100 hover:bg-slate-200 border border-slate-200/90 focus:outline-none transition shadow-sm flex items-center space-x-1.5 cursor-pointer" aria-label="Toggle Navigation Menu">
+          <svg id="hamburgerIcon" class="w-5 h-5 text-slate-800" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.3" d="M4 6h16M4 12h16M4 18h16"/>
           </svg>
-          <svg id="closeMenuIcon" class="w-6 h-6 hidden" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+          <svg id="closeMenuIcon" class="w-5 h-5 hidden text-slate-800" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.3" d="M6 18L18 6M6 6l12 12"/>
           </svg>
+          <span class="text-xs font-semibold text-slate-700 hidden sm:inline">Menu</span>
         </button>
       </div>
 
@@ -126,8 +166,8 @@
       </svg>
     </div>
 
-    <!-- ================= MOBILE NAVIGATION PANEL / DRAWER ================= -->
-    <div id="mobileNavPanel" class="hidden md:hidden mt-2">
+    <!-- ================= MOBILE / RESPONSIVE NAVIGATION PANEL (< lg screens) ================= -->
+    <div id="mobileNavPanel" class="hidden lg:hidden mt-2">
       <div class="glass-island rounded-2xl p-4 space-y-3 shadow-xl mobile-menu-enter border border-slate-200">
         <!-- Mobile Nav Links -->
         <div id="mobileNavLinks" class="hidden grid-cols-2 gap-2">
@@ -154,15 +194,15 @@
 
         <!-- Quick Persona Switch (Mobile) -->
         <div class="pt-2 border-t border-slate-100">
-          <p class="text-[10px] uppercase font-bold text-slate-400 tracking-wider mb-1.5">Switch Test Persona:</p>
+          <p class="text-[10px] uppercase font-bold text-slate-400 tracking-wider mb-1.5">Switch Account (Requires Login):</p>
           <div class="grid grid-cols-3 gap-1.5">
-            <button onclick="app.quickSwitch('Administrator'); app.closeMobileMenu();" class="py-1.5 px-2 bg-slate-100 hover:bg-blue-50 rounded-lg text-xs font-medium text-slate-700 text-center">
+            <button onclick="app.openSwitchAccountModal('Administrator'); app.closeMobileMenu();" class="py-1.5 px-2 bg-slate-100 hover:bg-blue-50 rounded-lg text-xs font-medium text-slate-700 text-center">
               👑 Admin
             </button>
-            <button onclick="app.quickSwitch('Staff'); app.closeMobileMenu();" class="py-1.5 px-2 bg-slate-100 hover:bg-blue-50 rounded-lg text-xs font-medium text-slate-700 text-center">
+            <button onclick="app.openSwitchAccountModal('Staff'); app.closeMobileMenu();" class="py-1.5 px-2 bg-slate-100 hover:bg-blue-50 rounded-lg text-xs font-medium text-slate-700 text-center">
               💼 Staff
             </button>
-            <button onclick="app.quickSwitch('End User'); app.closeMobileMenu();" class="py-1.5 px-2 bg-slate-100 hover:bg-blue-50 rounded-lg text-xs font-medium text-slate-700 text-center">
+            <button onclick="app.openSwitchAccountModal('End User'); app.closeMobileMenu();" class="py-1.5 px-2 bg-slate-100 hover:bg-blue-50 rounded-lg text-xs font-medium text-slate-700 text-center">
               👤 User
             </button>
           </div>
@@ -301,31 +341,44 @@
               </div>
             </div>
 
-            <!-- 1-Click Quick Demo Personas -->
+            <!-- Quick Credentials Selection -->
             <div class="bg-slate-50/90 border border-slate-200 rounded-xl p-3.5 space-y-2">
               <div class="flex items-center justify-between">
-                <span class="text-[11px] font-semibold text-slate-600 uppercase tracking-wide">1-Click Test Access:</span>
-                <span class="text-[10px] text-blue-600 font-medium">Instant Login</span>
+                <span class="text-[11px] font-semibold text-slate-600 uppercase tracking-wide">Quick Fill Account:</span>
+                <span class="text-[10px] text-blue-600 font-medium">Select to fill credentials</span>
               </div>
               <div class="grid grid-cols-3 gap-2">
-                <button onclick="app.quickLogin('Administrator')" class="py-2 px-2 bg-white hover:bg-blue-50 hover:border-blue-300 border border-slate-200 rounded-lg text-xs font-semibold text-slate-800 shadow-sm transition text-center flex flex-col items-center">
+                <button type="button" onclick="app.fillLoginCredentials('Administrator')" class="py-2 px-2 bg-white hover:bg-blue-50 hover:border-blue-300 border border-slate-200 rounded-lg text-xs font-semibold text-slate-800 shadow-sm transition text-center flex flex-col items-center cursor-pointer">
                   <span class="text-sm">👑</span>
                   <span class="mt-0.5">Admin</span>
                 </button>
-                <button onclick="app.quickLogin('Staff')" class="py-2 px-2 bg-white hover:bg-blue-50 hover:border-blue-300 border border-slate-200 rounded-lg text-xs font-semibold text-slate-800 shadow-sm transition text-center flex flex-col items-center">
+                <button type="button" onclick="app.fillLoginCredentials('Staff')" class="py-2 px-2 bg-white hover:bg-blue-50 hover:border-blue-300 border border-slate-200 rounded-lg text-xs font-semibold text-slate-800 shadow-sm transition text-center flex flex-col items-center cursor-pointer">
                   <span class="text-sm">💼</span>
                   <span class="mt-0.5">Staff</span>
                 </button>
-                <button onclick="app.quickLogin('End User')" class="py-2 px-2 bg-white hover:bg-blue-50 hover:border-blue-300 border border-slate-200 rounded-lg text-xs font-semibold text-slate-800 shadow-sm transition text-center flex flex-col items-center">
+                <button type="button" onclick="app.fillLoginCredentials('End User')" class="py-2 px-2 bg-white hover:bg-blue-50 hover:border-blue-300 border border-slate-200 rounded-lg text-xs font-semibold text-slate-800 shadow-sm transition text-center flex flex-col items-center cursor-pointer">
                   <span class="text-sm">👤</span>
                   <span class="mt-0.5">User</span>
                 </button>
               </div>
             </div>
 
-            <div class="relative flex items-center justify-center">
-              <div class="border-t border-slate-200 w-full"></div>
-              <span class="bg-white px-3 text-[11px] text-slate-400 font-medium uppercase absolute">Or enter credentials</span>
+            <!-- Sign in with Google Option (Requested by user) -->
+            <div class="space-y-3">
+              <button type="button" onclick="app.showGoogleSignInModal()" class="w-full py-2.5 px-4 bg-white hover:bg-slate-50/90 border border-slate-300 hover:border-slate-400 rounded-xl text-xs font-semibold text-slate-700 shadow-sm hover:shadow transition-all duration-200 flex items-center justify-center space-x-3 group cursor-pointer">
+                <svg class="w-4 h-4 flex-shrink-0" viewBox="0 0 24 24">
+                  <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
+                  <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
+                  <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.06H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.94l2.85-2.22.81-.63z"/>
+                  <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.52 6.16-4.52z"/>
+                </svg>
+                <span class="group-hover:text-slate-900 font-medium">Sign in with Google</span>
+              </button>
+
+              <div class="relative flex items-center justify-center">
+                <div class="border-t border-slate-200 w-full"></div>
+                <span class="bg-white px-3 text-[11px] text-slate-400 font-medium uppercase absolute">Or sign in with email / Gmail</span>
+              </div>
             </div>
 
             <!-- Error Notification Alert -->
@@ -352,10 +405,10 @@
                 </select>
               </div>
 
-              <!-- Email -->
+              <!-- Email (supports Gmail or any email) -->
               <div>
-                <label class="block text-xs font-semibold text-slate-700 mb-1">Email Address</label>
-                <input type="email" id="landingEmail" required placeholder="user@securetransfer.local" class="w-full text-xs border border-slate-300 rounded-xl px-3.5 py-2.5 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 bg-white">
+                <label class="block text-xs font-semibold text-slate-700 mb-1">Email or Gmail Address</label>
+                <input type="email" id="landingEmail" required placeholder="alex.morgan@gmail.com" class="w-full text-xs border border-slate-300 rounded-xl px-3.5 py-2.5 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 bg-white">
               </div>
 
               <!-- Password -->
@@ -994,6 +1047,154 @@
     </section>
 
   </main>
+
+  <!-- ================= GOOGLE SIGN-IN INTERACTIVE MODAL ================= -->
+  <div id="googleSignInModal" class="hidden fixed inset-0 z-50 overflow-y-auto bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4">
+    <div class="bg-white rounded-3xl max-w-md w-full p-6 sm:p-7 shadow-2xl border border-slate-100 transform transition-all relative">
+      
+      <!-- Close button -->
+      <button onclick="app.closeGoogleSignInModal()" class="absolute top-5 right-5 text-slate-400 hover:text-slate-600 p-1.5 rounded-full hover:bg-slate-100 transition">
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+        </svg>
+      </button>
+
+      <!-- Google Brand Header -->
+      <div class="flex items-center space-x-2.5 mb-3">
+        <svg class="w-6 h-6 flex-shrink-0" viewBox="0 0 24 24">
+          <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
+          <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
+          <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.06H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.94l2.85-2.22.81-.63z"/>
+          <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.52 6.16-4.52z"/>
+        </svg>
+        <span class="font-bold text-slate-800 text-sm">Sign in with Google</span>
+      </div>
+
+      <h3 class="text-lg font-bold text-slate-900 leading-snug">Choose an account</h3>
+      <p class="text-xs text-slate-500 mt-0.5 mb-4">to continue to <span class="font-semibold text-blue-600">CipherDrop Secure Transfer</span></p>
+
+      <!-- Account list -->
+      <div class="space-y-2 mb-4">
+        <!-- Account 1: Sai Nikhil -->
+        <button onclick="app.authenticateWithGoogle('sainikhil@gmail.com', 'Sai Nikhil')" class="w-full flex items-center justify-between p-3 rounded-2xl hover:bg-blue-50/60 border border-slate-200 hover:border-blue-200 transition text-left group">
+          <div class="flex items-center space-x-3">
+            <div class="w-9 h-9 rounded-full bg-blue-600 text-white font-bold flex items-center justify-center text-sm shadow-sm flex-shrink-0">
+              S
+            </div>
+            <div>
+              <div class="text-xs font-bold text-slate-900 group-hover:text-blue-600 transition-colors">Sai Nikhil</div>
+              <div class="text-[11px] text-slate-500 font-mono">sainikhil@gmail.com</div>
+            </div>
+          </div>
+          <span class="text-xs text-blue-600 font-semibold group-hover:translate-x-0.5 transition-transform">Continue →</span>
+        </button>
+
+        <!-- Account 2: Standard Google User -->
+        <button onclick="app.authenticateWithGoogle('alex.morgan@gmail.com', 'Alex Morgan')" class="w-full flex items-center justify-between p-3 rounded-2xl hover:bg-blue-50/60 border border-slate-200 hover:border-blue-200 transition text-left group">
+          <div class="flex items-center space-x-3">
+            <div class="w-9 h-9 rounded-full bg-emerald-600 text-white font-bold flex items-center justify-center text-sm shadow-sm flex-shrink-0">
+              A
+            </div>
+            <div>
+              <div class="text-xs font-bold text-slate-900 group-hover:text-blue-600 transition-colors">Alex Morgan</div>
+              <div class="text-[11px] text-slate-500 font-mono">alex.morgan@gmail.com</div>
+            </div>
+          </div>
+          <span class="text-xs text-blue-600 font-semibold group-hover:translate-x-0.5 transition-transform">Continue →</span>
+        </button>
+      </div>
+
+      <!-- Use Custom Gmail Account -->
+      <div class="pt-3 border-t border-slate-100">
+        <div class="text-xs font-semibold text-slate-700 mb-2">Or sign in with any Google / Gmail account:</div>
+        <form onsubmit="app.handleCustomGoogleAuth(event)" class="space-y-2.5">
+          <div>
+            <input type="email" id="customGoogleEmail" required placeholder="yourname@gmail.com" class="w-full text-xs border border-slate-300 rounded-xl px-3.5 py-2.5 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 bg-white">
+          </div>
+          <button type="submit" id="customGoogleSubmitBtn" class="w-full py-2.5 rounded-xl bg-slate-900 hover:bg-black text-white font-semibold text-xs transition shadow-sm flex items-center justify-center space-x-2">
+            <span>Continue with this Gmail Account</span>
+            <span>→</span>
+          </button>
+        </form>
+      </div>
+
+      <!-- Footer Privacy Note -->
+      <div class="mt-4 pt-3 border-t border-slate-100 text-[10px] text-slate-400 text-center">
+        🔒 Authenticated via Google Identity Services. CipherDrop will receive your name and verified email.
+      </div>
+
+    </div>
+  </div>
+
+  <!-- ================= SWITCH ACCOUNT LOGIN MODAL (Password Verification) ================= -->
+  <div id="switchAccountModal" class="hidden fixed inset-0 z-50 overflow-y-auto bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4">
+    <div class="bg-white rounded-3xl max-w-md w-full p-6 sm:p-7 shadow-2xl border border-slate-100 transform transition-all relative">
+      
+      <!-- Close button -->
+      <button onclick="app.closeSwitchAccountModal()" class="absolute top-5 right-5 text-slate-400 hover:text-slate-600 p-1.5 rounded-full hover:bg-slate-100 transition cursor-pointer">
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+        </svg>
+      </button>
+
+      <!-- Modal Header -->
+      <div class="flex items-center space-x-3 mb-2">
+        <div class="w-10 h-10 rounded-2xl bg-blue-100 text-blue-600 flex items-center justify-center font-bold text-base shadow-sm">
+          🔄
+        </div>
+        <div>
+          <h3 id="switchAccountModalTitle" class="text-base font-bold text-slate-900 leading-tight">Switch Account</h3>
+          <p class="text-xs text-slate-500">Enter your credentials to confirm switch</p>
+        </div>
+      </div>
+
+      <!-- Error Alert -->
+      <div id="switchAccountError" class="hidden my-3 p-3 rounded-xl bg-rose-50 border border-rose-200 text-xs text-rose-800 flex items-start space-x-2">
+        <span class="text-rose-600 font-bold">⚠️</span>
+        <span id="switchAccountErrorText">Invalid credentials.</span>
+      </div>
+
+      <!-- Password / Auth Form -->
+      <form id="switchAccountForm" onsubmit="app.handleSwitchAccountSubmit(event)" class="space-y-3.5 mt-3">
+        <div>
+          <label class="block text-xs font-semibold text-slate-700 mb-1">Account Email / Gmail</label>
+          <input type="email" id="switchAccountEmail" required placeholder="user@securetransfer.local" class="w-full text-xs border border-slate-300 rounded-xl px-3.5 py-2.5 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 bg-white">
+        </div>
+
+        <div>
+          <label class="block text-xs font-semibold text-slate-700 mb-1">Password</label>
+          <input type="password" id="switchAccountPassword" required placeholder="••••••••" class="w-full text-xs border border-slate-300 rounded-xl px-3.5 py-2.5 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 bg-white">
+        </div>
+
+        <!-- Quick Demo Hint -->
+        <div id="switchAccountHint" class="bg-slate-50 border border-slate-200 rounded-xl p-2.5 text-[11px] text-slate-500 flex items-center justify-between">
+          <span>Standard Pass: <strong class="text-slate-800 font-mono" id="switchAccountHintPass">Admin@12345</strong></span>
+          <button type="button" onclick="app.fillSwitchAccountPassword()" class="text-blue-600 font-semibold hover:underline text-[10px]">Auto Fill</button>
+        </div>
+
+        <button type="submit" id="switchAccountSubmitBtn" class="w-full py-2.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-semibold text-xs transition shadow-md shadow-blue-500/20 flex items-center justify-center space-x-2 cursor-pointer">
+          <span>Authenticate &amp; Switch Account</span>
+          <span>→</span>
+        </button>
+      </form>
+
+      <div class="relative flex items-center justify-center my-3.5">
+        <div class="border-t border-slate-200 w-full"></div>
+        <span class="bg-white px-2.5 text-[10px] text-slate-400 font-medium uppercase absolute">Or</span>
+      </div>
+
+      <button type="button" onclick="app.closeSwitchAccountModal(); app.showGoogleSignInModal();" class="w-full py-2.5 px-3 bg-white hover:bg-slate-50 border border-slate-200 hover:border-slate-300 rounded-xl text-xs font-medium text-slate-700 flex items-center justify-center space-x-2.5 transition shadow-sm cursor-pointer">
+        <svg class="w-4 h-4 flex-shrink-0" viewBox="0 0 24 24">
+          <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
+          <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
+          <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.06H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.94l2.85-2.22.81-.63z"/>
+          <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.52 6.16-4.52z"/>
+        </svg>
+        <span>Sign in with Google instead</span>
+      </button>
+
+    </div>
+  </div>
 
   <!-- ================= TOAST NOTIFICATION CONTAINER ================= -->
   <div id="toastContainer" class="fixed bottom-5 right-5 z-50 space-y-2 max-w-sm w-full px-4 sm:px-0 pointer-events-none">
