@@ -6,6 +6,9 @@ const assert = require('assert');
 const fs = require('fs');
 const path = require('path');
 
+// Demo users are intentionally opt-in; the integration suite needs them locally.
+process.env.SEED_DEMO_USERS = 'true';
+
 const PORT = 5000;
 const BASE_URL = `http://localhost:${PORT}`;
 

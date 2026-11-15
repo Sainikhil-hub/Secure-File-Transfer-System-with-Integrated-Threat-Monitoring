@@ -124,16 +124,43 @@ npm install
 ```
 
 ### Step 2: Environment Configuration
-The `.env` file is pre-configured with secure defaults:
+Create a local `.env` file. Secrets are intentionally not committed; generate unique values for every environment:
 ```env
 PORT=5000
 MONGODB_URI=mongodb://127.0.0.1:27017/secure_transfer_db
-JWT_SECRET=secure-vault-jwt-key-production-grade
-MASTER_ENCRYPTION_KEY=a89f3c1d94f2740bc18a77919327e51c89304721948dbf381c04859aefb20491
+JWT_SECRET=<unique-48-byte-random-hex-value>
+MASTER_ENCRYPTION_KEY=<unique-32-byte-random-hex-value>
 NODE_ENV=development
 UPLOAD_DIR=uploads/encrypted
 MAX_FILE_SIZE_MB=100
+SEED_DEMO_USERS=true
 ```
+
+Generate each value privately with PowerShell (run the appropriate command once per secret):
+
+```powershell
+node -e "console.log(require('crypto').randomBytes(48).toString('hex'))"
+node -e "console.log(require('crypto').randomBytes(32).toString('hex'))"
+```
+
+For production, set `MONGODB_URI`, `JWT_SECRET`, and `MASTER_ENCRYPTION_KEY`. The application refuses to start without them. It also requires persistent S3-compatible storage:
+
+```env
+NODE_ENV=production
+STORAGE_PROVIDER=s3
+S3_BUCKET=your-private-bucket
+S3_REGION=ap-south-1
+S3_PREFIX=cipherdrop/encrypted
+# AWS_ACCESS_KEY_ID=<least-privilege-access-key>
+# AWS_SECRET_ACCESS_KEY=<least-privilege-secret-key>
+# Optional for S3-compatible providers such as Cloudflare R2 or MinIO
+# S3_ENDPOINT=https://...
+# S3_FORCE_PATH_STYLE=true
+BOOTSTRAP_ADMIN_EMAIL=admin@example.com
+BOOTSTRAP_ADMIN_PASSWORD=<unique-password-of-at-least-12-characters>
+```
+
+The bootstrap administrator is created only if it does not already exist. `SEED_DEMO_USERS=true` is supported only outside production and must never be set on Render. Attach least-privilege object-storage credentials through Render environment variables; the bucket must remain private. Production startup also refuses to run if it finds any legacy `@securetransfer.local` demo accounts—remove those documents or reset them before deployment.
 
 ### Step 3: Start the Application
 ```powershell

@@ -1,11 +1,28 @@
 const crypto = require('crypto');
 const fs = require('fs');
 const path = require('path');
+const { S3Client, PutObjectCommand, GetObjectCommand, DeleteObjectCommand } = require('@aws-sdk/client-s3');
 const config = require('../config');
 
-// Ensure upload directory exists
-if (!fs.existsSync(config.uploadDir)) {
+// Local storage is for development only. Production uses persistent S3-compatible object storage.
+if (config.storage.provider === 'local' && !fs.existsSync(config.uploadDir)) {
   fs.mkdirSync(config.uploadDir, { recursive: true });
+}
+
+const s3Client = config.storage.provider === 's3'
+  ? new S3Client({
+    region: config.storage.s3.region,
+    ...(config.storage.s3.endpoint ? { endpoint: config.storage.s3.endpoint } : {}),
+    forcePathStyle: config.storage.s3.forcePathStyle
+  })
+  : null;
+
+async function streamToBuffer(body) {
+  if (Buffer.isBuffer(body)) return body;
+  if (typeof body.transformToByteArray === 'function') return Buffer.from(await body.transformToByteArray());
+  const chunks = [];
+  for await (const chunk of body) chunks.push(Buffer.from(chunk));
+  return Buffer.concat(chunks);
 }
 
 class CryptoEngine {
@@ -62,10 +79,20 @@ class CryptoEngine {
     const encryptedData = Buffer.concat([cipher.update(buffer), cipher.final()]);
     const authTag = cipher.getAuthTag(); // 16 bytes authentication tag
 
-    // 6. Write ONLY the encrypted bytes to disk
+    // 6. Persist ONLY encrypted bytes. Plaintext is never sent to object storage.
     const storedFileName = `${fileId}.enc`;
-    const destinationPath = path.join(config.uploadDir, storedFileName);
-    await fs.promises.writeFile(destinationPath, encryptedData);
+    if (config.storage.provider === 's3') {
+      const key = `${config.storage.s3.prefix}/${storedFileName}`;
+      await s3Client.send(new PutObjectCommand({
+        Bucket: config.storage.s3.bucket,
+        Key: key,
+        Body: encryptedData,
+        ContentType: 'application/octet-stream',
+        ServerSideEncryption: config.storage.s3.serverSideEncryption
+      }));
+    } else {
+      await fs.promises.writeFile(path.join(config.uploadDir, storedFileName), encryptedData);
+    }
 
     return {
       fileId,
@@ -86,12 +113,27 @@ class CryptoEngine {
    * @returns {Promise<Buffer>} Decrypted plaintext buffer
    */
   async decryptFile(fileRecord) {
-    const filePath = path.join(config.uploadDir, fileRecord.storedFileName);
-    if (!fs.existsSync(filePath)) {
-      throw new Error('Encrypted file not found on server storage');
+    let encryptedData;
+    if (config.storage.provider === 's3') {
+      try {
+        const response = await s3Client.send(new GetObjectCommand({
+          Bucket: config.storage.s3.bucket,
+          Key: `${config.storage.s3.prefix}/${fileRecord.storedFileName}`
+        }));
+        encryptedData = await streamToBuffer(response.Body);
+      } catch (err) {
+        if (err.name === 'NoSuchKey' || err.$metadata?.httpStatusCode === 404) {
+          throw new Error('Encrypted file not found in object storage');
+        }
+        throw err;
+      }
+    } else {
+      const filePath = path.join(config.uploadDir, fileRecord.storedFileName);
+      if (!fs.existsSync(filePath)) {
+        throw new Error('Encrypted file not found on server storage');
+      }
+      encryptedData = await fs.promises.readFile(filePath);
     }
-
-    const encryptedData = await fs.promises.readFile(filePath);
     const salt = Buffer.from(fileRecord.salt, 'hex');
     const iv = Buffer.from(fileRecord.iv, 'hex');
     const authTag = Buffer.from(fileRecord.authTag, 'hex');
@@ -124,9 +166,16 @@ class CryptoEngine {
    * @param {string} storedFileName 
    */
   async deleteFile(storedFileName) {
-    const filePath = path.join(config.uploadDir, storedFileName);
-    if (fs.existsSync(filePath)) {
-      await fs.promises.unlink(filePath);
+    if (config.storage.provider === 's3') {
+      await s3Client.send(new DeleteObjectCommand({
+        Bucket: config.storage.s3.bucket,
+        Key: `${config.storage.s3.prefix}/${storedFileName}`
+      }));
+    } else {
+      const filePath = path.join(config.uploadDir, storedFileName);
+      if (fs.existsSync(filePath)) {
+        await fs.promises.unlink(filePath);
+      }
     }
   }
 }

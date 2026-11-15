@@ -6,9 +6,15 @@ const path = require('path');
 const config = require('./config');
 const websocketService = require('./services/websocketService');
 
-// Models for seed data
+// Models for initialization
 const User = require('./models/User');
 const SecurityPolicy = require('./models/SecurityPolicy');
+
+const legacyDemoEmails = [
+  'admin@securetransfer.local',
+  'staff@securetransfer.local',
+  'user@securetransfer.local'
+];
 
 const app = express();
 const server = http.createServer(app);
@@ -49,58 +55,64 @@ app.use((req, res) => {
   }
 });
 
-// Seed default users if database is fresh or ensure clean corporate accounts
-async function seedDefaultUsers() {
+async function ensureSecurityPolicy() {
+  const policy = await SecurityPolicy.findOne({ policyKey: 'global_policy' });
+  if (!policy) {
+    await SecurityPolicy.create({ policyKey: 'global_policy' });
+    console.log('🛡️ Default security policy initialized.');
+  }
+}
+
+// Demo accounts are deliberately opt-in and are never created in production.
+async function initializeAccounts() {
   try {
-    // 1. Administrator
-    let admin = await User.findOne({ email: 'admin@securetransfer.local' });
-    if (!admin) {
-      await User.create({
-        name: 'Security Administrator',
-        email: 'admin@securetransfer.local',
-        password: 'Admin@12345',
-        role: 'Administrator'
-      });
+    // Never make a production database containing known demo credentials reachable.
+    if (config.isProduction) {
+      const legacyAccountCount = await User.countDocuments({ email: { $in: legacyDemoEmails } });
+      if (legacyAccountCount > 0) {
+        throw new Error(
+          'Legacy demo accounts were found. Remove or reset admin@securetransfer.local, staff@securetransfer.local, and user@securetransfer.local before deploying.'
+        );
+      }
     }
 
-    // 2. Staff (Generic Corporate Account)
-    let staff = await User.findOne({ email: 'staff@securetransfer.local' });
-    if (!staff) {
-      await User.create({
-        name: 'Staff Operations',
-        email: 'staff@securetransfer.local',
-        password: 'Staff@12345',
-        role: 'Staff'
-      });
+    const bootstrapEmail = process.env.BOOTSTRAP_ADMIN_EMAIL?.trim().toLowerCase();
+    const bootstrapPassword = process.env.BOOTSTRAP_ADMIN_PASSWORD;
+    if ((bootstrapEmail && !bootstrapPassword) || (!bootstrapEmail && bootstrapPassword)) {
+      throw new Error('Set both BOOTSTRAP_ADMIN_EMAIL and BOOTSTRAP_ADMIN_PASSWORD, or neither.');
     }
 
-    // 3. End User (Generic Client Account)
-    let endUser = await User.findOne({ email: 'user@securetransfer.local' });
-    if (!endUser) {
-      await User.create({
-        name: 'Standard User',
-        email: 'user@securetransfer.local',
-        password: 'User@12345',
-        role: 'End User'
-      });
+    if (bootstrapEmail && bootstrapPassword) {
+      if (bootstrapPassword.length < 12) {
+        throw new Error('BOOTSTRAP_ADMIN_PASSWORD must be at least 12 characters long.');
+      }
+      const admin = await User.findOne({ email: bootstrapEmail });
+      if (!admin) {
+        await User.create({
+          name: process.env.BOOTSTRAP_ADMIN_NAME?.trim() || 'Security Administrator',
+          email: bootstrapEmail,
+          password: bootstrapPassword,
+          role: 'Administrator'
+        });
+        console.log(`Bootstrap administrator created: ${bootstrapEmail}`);
+      }
     }
 
-    // Clean up any legacy accounts with personal names
-    await User.deleteMany({ email: { $in: ['samanvi@securetransfer.local', 'nikhil@securetransfer.local'] } });
-
-    console.log('✅ Standard Accounts Active:');
-    console.log('   👑 Admin:    admin@securetransfer.local (Pass: Admin@12345)');
-    console.log('   💼 Staff:    staff@securetransfer.local (Pass: Staff@12345)');
-    console.log('   👤 End User: user@securetransfer.local  (Pass: User@12345)');
-
-    // Ensure default security policy exists
-    const policy = await SecurityPolicy.findOne({ policyKey: 'global_policy' });
-    if (!policy) {
-      await SecurityPolicy.create({ policyKey: 'global_policy' });
-      console.log('🛡️ Default security policy initialized.');
+    if (!config.isProduction && process.env.SEED_DEMO_USERS === 'true') {
+      const demoUsers = [
+        ['Security Administrator', 'admin@securetransfer.local', 'Admin@12345', 'Administrator'],
+        ['Staff Operations', 'staff@securetransfer.local', 'Staff@12345', 'Staff'],
+        ['Standard User', 'user@securetransfer.local', 'User@12345', 'End User']
+      ];
+      for (const [name, email, password, role] of demoUsers) {
+        if (!await User.findOne({ email })) await User.create({ name, email, password, role });
+      }
+      console.warn('Demo accounts enabled for development only; do not use their credentials outside a local test environment.');
     }
+
+    await ensureSecurityPolicy();
   } catch (err) {
-    console.error('Error during seed:', err.message);
+    throw new Error(`Account initialization failed: ${err.message}`);
   }
 }
 
@@ -111,7 +123,7 @@ async function startServer() {
     await mongoose.connect(config.mongodbUri);
     console.log('✅ MongoDB connection established.');
 
-    await seedDefaultUsers();
+    await initializeAccounts();
 
     server.listen(config.port, () => {
       console.log(`=======================================================`);
