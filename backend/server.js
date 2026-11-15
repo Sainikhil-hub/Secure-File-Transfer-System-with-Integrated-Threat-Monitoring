@@ -119,7 +119,7 @@ async function initializeAccounts() {
 // Connect to MongoDB and start server
 async function startServer() {
   try {
-    console.log(`Connecting to MongoDB at ${config.mongodbUri}...`);
+    console.log('Connecting to MongoDB...');
     await mongoose.connect(config.mongodbUri);
     console.log('✅ MongoDB connection established.');
 
