@@ -7,6 +7,9 @@ const fs = require('fs');
 const path = require('path');
 const assert = require('assert');
 
+// Cryptography unit tests exercise the local development storage adapter.
+process.env.STORAGE_PROVIDER = 'local';
+
 // Test Suite
 async function runSecurityTests() {
   console.log('====================================================');

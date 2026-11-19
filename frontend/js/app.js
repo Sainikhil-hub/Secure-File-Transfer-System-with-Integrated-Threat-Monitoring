@@ -172,6 +172,14 @@ const app = {
         return;
       }
     }
+    if (viewId === 'staff-request' && user.role !== 'End User') {
+      this.showToast('Staff access requests are available to End User accounts only.', 'error');
+      return this.navigate('upload');
+    }
+    if (viewId === 'monitor' && user.role !== 'Staff') {
+      this.showToast('Access restricted: Staff role required.', 'error');
+      return this.navigate('upload');
+    }
 
     this.currentView = viewId;
 
@@ -202,6 +210,10 @@ const app = {
       transfersManager.setTab('received');
     } else if (viewId === 'admin') {
       adminDashboard.refreshAll();
+    } else if (viewId === 'staff-request') {
+      staffPortal.loadRequestStatus();
+    } else if (viewId === 'monitor') {
+      staffPortal.loadMonitor();
     }
   },
 
@@ -211,8 +223,12 @@ const app = {
     const userSection = document.getElementById('userSection');
     const mobileHeaderUserChip = document.getElementById('mobileHeaderUserChip');
     const navAdmin = document.getElementById('nav-admin');
+    const menuMonitor = document.getElementById('menu-monitor');
+    const menuStaffRequest = document.getElementById('menu-staff-request');
     const mobileNavLinks = document.getElementById('mobileNavLinks');
     const mobileNavAdmin = document.getElementById('mobile-nav-admin');
+    const mobileNavMonitor = document.getElementById('mobile-nav-monitor');
+    const mobileNavStaffRequest = document.getElementById('mobile-nav-staff-request');
     const mobileUserInfo = document.getElementById('mobileUserInfo');
     const mobileAuthBtn = document.getElementById('mobileAuthBtn');
     const currentRoleIcon = document.getElementById('currentRoleIcon');
@@ -284,6 +300,13 @@ const app = {
         }
       }
 
+      const isStaff = user.role === 'Staff';
+      const isEndUser = user.role === 'End User';
+      if (menuMonitor) menuMonitor.classList.toggle('hidden', !isStaff);
+      if (mobileNavMonitor) mobileNavMonitor.classList.toggle('hidden', !isStaff);
+      if (menuStaffRequest) menuStaffRequest.classList.toggle('hidden', !isEndUser);
+      if (mobileNavStaffRequest) mobileNavStaffRequest.classList.toggle('hidden', !isEndUser);
+
       // Desktop User Info & Logout Button (Compact, within the curved island boundary)
       if (userSection) {
         const avatarLetter = (user.name || 'U').charAt(0).toUpperCase();
@@ -350,6 +373,10 @@ const app = {
         mobileNavAdmin.classList.add('hidden');
         mobileNavAdmin.classList.remove('flex');
       }
+      if (menuMonitor) menuMonitor.classList.add('hidden');
+      if (mobileNavMonitor) mobileNavMonitor.classList.add('hidden');
+      if (menuStaffRequest) menuStaffRequest.classList.add('hidden');
+      if (mobileNavStaffRequest) mobileNavStaffRequest.classList.add('hidden');
 
       if (userSection) {
         userSection.innerHTML = '';
@@ -369,7 +396,6 @@ const app = {
     const title = document.getElementById('landingAuthTitle');
     const subtitle = document.getElementById('landingAuthSubtitle');
     const nameGroup = document.getElementById('landingNameGroup');
-    const roleGroup = document.getElementById('landingRoleGroup');
     const submitBtn = document.getElementById('landingSubmitBtn');
     const toggleLabel = document.getElementById('landingToggleLabel');
     const toggleBtn = document.getElementById('landingToggleBtn');
@@ -381,7 +407,6 @@ const app = {
       title.textContent = 'Create a Secure Account';
       subtitle.textContent = 'Register to start transferring encrypted files';
       nameGroup.classList.remove('hidden');
-      roleGroup.classList.remove('hidden');
       submitBtn.innerHTML = `<span>Create Free Account</span> <span>→</span>`;
       toggleLabel.textContent = 'Already have an account?';
       toggleBtn.textContent = 'Sign in instead';
@@ -389,7 +414,6 @@ const app = {
       title.textContent = 'Sign in to CipherDrop';
       subtitle.textContent = 'Log in to upload, share, or decrypt your files';
       nameGroup.classList.add('hidden');
-      roleGroup.classList.add('hidden');
       submitBtn.innerHTML = `<span>Sign In to CipherDrop</span> <span>→</span>`;
       toggleLabel.textContent = "Don't have an account yet?";
       toggleBtn.textContent = 'Create an account';
@@ -420,8 +444,7 @@ const app = {
       let res;
       if (this.landingAuthMode === 'register') {
         const name = document.getElementById('landingName').value;
-        const role = document.getElementById('landingRole').value;
-        res = await api.register(name, email, password, role);
+        res = await api.register(name, email, password);
       } else {
         res = await api.login(email, password);
       }
@@ -450,35 +473,8 @@ const app = {
     }
   },
 
-  // Fill standard credentials in landing login card so user can verify and submit
-  fillLoginCredentials(role) {
-    if (this.landingAuthMode === 'register') {
-      this.toggleLandingAuthMode();
-    }
-    const emailInput = document.getElementById('landingEmail');
-    const passInput = document.getElementById('landingPassword');
-    const submitBtn = document.getElementById('landingSubmitBtn');
-
-    if (role === 'Administrator') {
-      if (emailInput) emailInput.value = 'admin@securetransfer.local';
-      if (passInput) passInput.value = 'Admin@12345';
-    } else if (role === 'Staff') {
-      if (emailInput) emailInput.value = 'staff@securetransfer.local';
-      if (passInput) passInput.value = 'Staff@12345';
-    } else {
-      if (emailInput) emailInput.value = 'user@securetransfer.local';
-      if (passInput) passInput.value = 'User@12345';
-    }
-
-    if (passInput) passInput.focus();
-    if (submitBtn) {
-      submitBtn.classList.add('ring-4', 'ring-blue-400/40');
-      setTimeout(() => submitBtn.classList.remove('ring-4', 'ring-blue-400/40'), 1200);
-    }
-  },
-
-  // Open Switch Account Modal (Requires Login Information)
-  openSwitchAccountModal(role = '') {
+  // Open Switch Account Modal. Credentials are never pre-filled in the client.
+  openSwitchAccountModal() {
     const modal = document.getElementById('switchAccountModal');
     const emailInput = document.getElementById('switchAccountEmail');
     const passInput = document.getElementById('switchAccountPassword');
@@ -488,22 +484,8 @@ const app = {
     if (errAlert) errAlert.classList.add('hidden');
     if (passInput) passInput.value = '';
 
-    let targetEmail = '';
-    let targetPass = '';
-
-    if (role === 'Administrator') {
-      targetEmail = 'admin@securetransfer.local';
-      targetPass = 'Admin@12345';
-    } else if (role === 'Staff') {
-      targetEmail = 'staff@securetransfer.local';
-      targetPass = 'Staff@12345';
-    } else if (role === 'End User') {
-      targetEmail = 'user@securetransfer.local';
-      targetPass = 'User@12345';
-    }
-
-    if (emailInput) emailInput.value = targetEmail;
-    if (hintPass) hintPass.textContent = targetPass || 'Enter password';
+    if (emailInput) emailInput.value = '';
+    if (hintPass) hintPass.textContent = 'Enter password';
 
     if (modal) modal.classList.remove('hidden');
     if (passInput) passInput.focus();

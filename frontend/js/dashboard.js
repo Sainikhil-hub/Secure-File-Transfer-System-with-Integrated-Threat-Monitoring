@@ -6,6 +6,7 @@ const adminDashboard = {
   alerts: [],
   logs: [],
   users: [],
+  staffRequests: [],
 
   init() {
     this.connectWebSocket();
@@ -74,7 +75,8 @@ const adminDashboard = {
       this.loadAlerts(),
       this.loadLogs(),
       this.loadUsers(),
-      this.loadPolicy()
+      this.loadPolicy(),
+      this.loadStaffRequests()
     ]);
   },
 
@@ -248,16 +250,12 @@ const adminDashboard = {
           <tr class="hover:bg-slate-50 transition">
             <td class="px-6 py-3 font-semibold text-slate-900">${u.name}</td>
             <td class="px-6 py-3 text-slate-600 font-mono text-[11px]">${u.email}</td>
-            <td class="px-6 py-3">
-              <select onchange="adminDashboard.changeRole('${u.id}', this.value)" class="text-xs border border-slate-300 rounded px-2 py-1 bg-white font-medium">
-                <option value="Administrator" ${u.role === 'Administrator' ? 'selected' : ''}>Administrator</option>
-                <option value="Staff" ${u.role === 'Staff' ? 'selected' : ''}>Staff</option>
-                <option value="End User" ${u.role === 'End User' ? 'selected' : ''}>End User</option>
-              </select>
-            </td>
+            <td class="px-6 py-3"><span class="font-medium">${u.role}</span></td>
             <td class="px-6 py-3">${statusBadge}</td>
             <td class="px-6 py-3 text-right">
-              ${isLocked ? `
+              ${u.role === 'Staff' ? `
+                <button onclick="adminDashboard.changeRole('${u.id}', 'End User')" class="px-3 py-1 bg-amber-600 hover:bg-amber-700 text-white font-medium text-xs rounded transition shadow-sm">Revoke Staff</button>
+              ` : isLocked ? `
                 <button onclick="adminDashboard.unlockUser('${u.id}')" class="px-3 py-1 bg-emerald-600 hover:bg-emerald-700 text-white font-medium text-xs rounded transition shadow-sm">
                   Unlock Account
                 </button>
@@ -292,6 +290,49 @@ const adminDashboard = {
     } catch (err) {
       app.showToast(err.message, 'error');
     }
+  },
+
+  async loadStaffRequests() {
+    const tbody = document.getElementById('staffRequestsTableBody');
+    if (!tbody) return;
+    try {
+      const res = await api.getStaffRequests('Pending');
+      this.staffRequests = res.requests || [];
+      if (!this.staffRequests.length) {
+        tbody.innerHTML = '<tr><td colspan="7" class="px-5 py-6 text-center text-slate-400">No pending Staff access requests.</td></tr>';
+        return;
+      }
+      tbody.innerHTML = this.staffRequests.map(r => `
+        <tr class="border-t border-slate-100 align-top">
+          <td class="px-5 py-3 font-semibold">${this.escapeHtml(r.fullName)}<div class="text-[10px] font-normal text-slate-500">${this.escapeHtml(r.email)}</div></td>
+          <td class="px-5 py-3">${this.escapeHtml(r.employeeId)}</td>
+          <td class="px-5 py-3">${this.escapeHtml(r.department)}</td>
+          <td class="px-5 py-3">${this.escapeHtml(r.designation)}</td>
+          <td class="px-5 py-3 max-w-xs whitespace-normal">${this.escapeHtml(r.reason)}</td>
+          <td class="px-5 py-3 text-slate-500">${new Date(r.createdAt).toLocaleDateString()}</td>
+          <td class="px-5 py-3 whitespace-nowrap space-x-1"><button onclick="adminDashboard.decideStaffRequest('${r.requestId}', 'Approved')" class="px-2 py-1 bg-emerald-600 text-white rounded">Approve</button><button onclick="adminDashboard.decideStaffRequest('${r.requestId}', 'Rejected')" class="px-2 py-1 bg-rose-600 text-white rounded">Reject</button></td>
+        </tr>`).join('');
+    } catch (err) {
+      tbody.innerHTML = `<tr><td colspan="7" class="px-5 py-6 text-center text-rose-600">${this.escapeHtml(err.message)}</td></tr>`;
+    }
+  },
+
+  async decideStaffRequest(requestId, decision) {
+    const reviewNote = window.prompt(`Optional note for this ${decision.toLowerCase()} decision:`) || '';
+    try {
+      await api.decideStaffRequest(requestId, decision, reviewNote);
+      app.showToast(`Staff request ${decision.toLowerCase()}.`, 'success');
+      this.loadStaffRequests();
+      this.loadUsers();
+    } catch (err) {
+      app.showToast(err.message, 'error');
+    }
+  },
+
+  escapeHtml(value) {
+    const element = document.createElement('div');
+    element.textContent = value || '';
+    return element.innerHTML;
   },
 
   async loadPolicy() {

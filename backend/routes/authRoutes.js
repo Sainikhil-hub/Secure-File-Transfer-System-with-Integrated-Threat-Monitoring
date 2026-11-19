@@ -22,7 +22,7 @@ const generateToken = (user) => {
  */
 router.post('/register', async (req, res) => {
   try {
-    const { name, email, password, role } = req.body;
+    const { name, email, password } = req.body;
 
     if (!name || !email || !password) {
       return res.status(400).json({ success: false, message: 'Please provide name, email, and password.' });
@@ -37,14 +37,12 @@ router.post('/register', async (req, res) => {
       return res.status(400).json({ success: false, message: 'An account with this email address already exists.' });
     }
 
-    // Role can only be Staff or End User during regular registration unless admin is creating
-    const userRole = (role === 'Staff' || role === 'End User') ? role : 'End User';
-
     const user = new User({
       name: name.trim(),
       email: email.toLowerCase().trim(),
       password,
-      role: userRole
+      // Public registration is always least-privilege. Staff access needs an approved request.
+      role: 'End User'
     });
 
     await user.save();

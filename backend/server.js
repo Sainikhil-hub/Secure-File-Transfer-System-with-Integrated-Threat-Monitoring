@@ -33,6 +33,7 @@ app.use(express.static(path.join(__dirname, '..', 'frontend')));
 // API Routes
 app.use('/api/auth', require('./routes/authRoutes'));
 app.use('/api/files', require('./routes/fileRoutes'));
+app.use('/api/staff', require('./routes/staffRoutes'));
 app.use('/api/admin', require('./routes/adminRoutes'));
 app.use('/api/config', require('./routes/configRoutes'));
 

@@ -75,10 +75,10 @@ const api = {
     });
   },
 
-  register(name, email, password, role) {
+  register(name, email, password) {
     return this.request('/api/auth/register', {
       method: 'POST',
-      body: JSON.stringify({ name, email, password, role })
+      body: JSON.stringify({ name, email, password })
     });
   },
 
@@ -95,6 +95,18 @@ const api = {
 
   getUsers() {
     return this.request('/api/auth/users');
+  },
+
+  requestStaffAccess(details) {
+    return this.request('/api/staff/access-requests', { method: 'POST', body: JSON.stringify(details) });
+  },
+
+  getMyStaffRequests() {
+    return this.request('/api/staff/access-requests/me');
+  },
+
+  getStaffMonitor() {
+    return this.request('/api/staff/monitor');
   },
 
   // File Endpoints
@@ -181,6 +193,17 @@ const api = {
     return this.request(`/api/admin/users/role/${userId}`, {
       method: 'POST',
       body: JSON.stringify({ role })
+    });
+  },
+
+  getStaffRequests(status = 'Pending') {
+    return this.request(`/api/admin/staff-requests?status=${encodeURIComponent(status)}`);
+  },
+
+  decideStaffRequest(requestId, decision, reviewNote = '') {
+    return this.request(`/api/admin/staff-requests/${requestId}/decision`, {
+      method: 'POST',
+      body: JSON.stringify({ decision, reviewNote })
     });
   },
 

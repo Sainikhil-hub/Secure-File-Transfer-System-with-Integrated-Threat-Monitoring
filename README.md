@@ -100,15 +100,11 @@ The threat engine continuously observes application events and enforces active c
 
 ---
 
-## 5. Pre-Seeded Demonstration Accounts
+## 5. Role and Staff Approval Workflow
 
-For evaluation and testing, the database automatically seeds with three roles:
+Public registration always creates an **End User** account. An End User may submit a Staff access request with their organizational details; an Administrator must manually verify and approve it. Staff receive a read-only, redacted security monitor and cannot access Administrator APIs or other users' private file contents.
 
-| Role | Email Address | Password | Intended Use / Features |
-| :--- | :--- | :--- | :--- |
-| 👑 **Administrator** | `admin@securetransfer.local` | `Admin@12345` | Full access to Security Threat Center, live alert stream, activity logs explorer, user lock/unlock, policy threshold configuration, and threat simulator. |
-| 💼 **Staff** | `staff@securetransfer.local` | `Staff@12345` | Organizational user able to upload, encrypt, and share sensitive files, inspect sent transfers, and place files in quarantine. |
-| 👤 **End User** | `user@securetransfer.local` | `User@12345` | Standard user with simple 4-step guided transfer wizard, received file inbox, and one-click decrypt & download. |
+The optional local-only demo accounts are created only when `NODE_ENV` is not `production` and `SEED_DEMO_USERS=true`. Never use, document, or deploy demo credentials in a public environment.
 
 ---
 

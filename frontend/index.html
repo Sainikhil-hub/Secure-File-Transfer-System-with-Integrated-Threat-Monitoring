@@ -95,33 +95,9 @@
           <!-- Dropdown Card -->
           <div id="personaDropdownMenu" class="hidden absolute right-0 mt-2 w-56 bg-white rounded-2xl shadow-2xl border border-slate-200 py-1.5 z-50 transition-all origin-top-right">
             <div class="px-3 py-1 text-[10px] font-bold uppercase tracking-wider text-slate-400 border-b border-slate-100">Switch Account</div>
-            <button onclick="app.openSwitchAccountModal('Administrator'); app.closePersonaDropdown();" class="w-full text-left px-3.5 py-2 text-xs font-medium text-slate-700 hover:bg-blue-50 hover:text-blue-700 flex items-center space-x-2.5 transition">
-              <span class="text-base">👑</span>
-              <div class="flex flex-col">
-                <span class="font-semibold leading-tight text-slate-800">Administrator</span>
-                <span class="text-[10px] text-slate-400">admin@securetransfer.local</span>
-              </div>
-            </button>
-            <button onclick="app.openSwitchAccountModal('Staff'); app.closePersonaDropdown();" class="w-full text-left px-3.5 py-2 text-xs font-medium text-slate-700 hover:bg-blue-50 hover:text-blue-700 flex items-center space-x-2.5 transition">
-              <span class="text-base">💼</span>
-              <div class="flex flex-col">
-                <span class="font-semibold leading-tight text-slate-800">Staff Operations</span>
-                <span class="text-[10px] text-slate-400">staff@securetransfer.local</span>
-              </div>
-            </button>
-            <button onclick="app.openSwitchAccountModal('End User'); app.closePersonaDropdown();" class="w-full text-left px-3.5 py-2 text-xs font-medium text-slate-700 hover:bg-blue-50 hover:text-blue-700 flex items-center space-x-2.5 transition">
-              <span class="text-base">👤</span>
-              <div class="flex flex-col">
-                <span class="font-semibold leading-tight text-slate-800">End User</span>
-                <span class="text-[10px] text-slate-400">user@securetransfer.local</span>
-              </div>
-            </button>
-            <div class="border-t border-slate-100 mt-1 pt-1">
-              <button onclick="app.openSwitchAccountModal(''); app.closePersonaDropdown();" class="w-full text-left px-3.5 py-1.5 text-xs font-medium text-blue-600 hover:bg-blue-50 flex items-center space-x-2 transition">
-                <span>➕</span>
-                <span>Switch to Other Account...</span>
-              </button>
-            </div>
+            <button id="menu-staff-request" onclick="app.navigate('staff-request'); app.closePersonaDropdown();" class="hidden w-full text-left px-3.5 py-2.5 text-xs font-medium text-blue-700 hover:bg-blue-50 flex items-center space-x-2"><span>📝</span><span>Request Staff Access</span></button>
+            <button id="menu-monitor" onclick="app.navigate('monitor'); app.closePersonaDropdown();" class="hidden w-full text-left px-3.5 py-2.5 text-xs font-medium text-indigo-700 hover:bg-indigo-50 flex items-center space-x-2"><span>🛡️</span><span>Staff Security Monitor</span></button>
+            <button onclick="app.openSwitchAccountModal(); app.closePersonaDropdown();" class="w-full text-left px-3.5 py-2.5 text-xs font-medium text-blue-600 hover:bg-blue-50 flex items-center space-x-2 transition"><span>↔</span><span>Sign in to another account</span></button>
           </div>
         </div>
 
@@ -186,6 +162,12 @@
             </div>
             <span class="text-[9px] bg-amber-600 text-white font-bold px-1.5 py-0.5 rounded-full">ADMIN</span>
           </button>
+          <button id="mobile-nav-staff-request" onclick="app.navigate('staff-request'); app.closeMobileMenu();" class="hidden col-span-2 p-2.5 rounded-xl text-left text-xs font-semibold bg-blue-50 text-blue-800 border border-blue-200">
+            Request Staff Access
+          </button>
+          <button id="mobile-nav-monitor" onclick="app.navigate('monitor'); app.closeMobileMenu();" class="hidden col-span-2 p-2.5 rounded-xl text-left text-xs font-semibold bg-indigo-50 text-indigo-800 border border-indigo-200">
+            Staff Security Monitor
+          </button>
           <button onclick="app.navigate('guide'); app.closeMobileMenu();" class="col-span-2 p-2.5 rounded-xl text-left text-xs font-semibold bg-slate-50 text-slate-700 hover:bg-slate-100 flex items-center space-x-2">
             <span>ℹ️</span>
             <span>Security Guide</span>
@@ -195,17 +177,7 @@
         <!-- Quick Persona Switch (Mobile) -->
         <div class="pt-2 border-t border-slate-100">
           <p class="text-[10px] uppercase font-bold text-slate-400 tracking-wider mb-1.5">Switch Account (Requires Login):</p>
-          <div class="grid grid-cols-3 gap-1.5">
-            <button onclick="app.openSwitchAccountModal('Administrator'); app.closeMobileMenu();" class="py-1.5 px-2 bg-slate-100 hover:bg-blue-50 rounded-lg text-xs font-medium text-slate-700 text-center">
-              👑 Admin
-            </button>
-            <button onclick="app.openSwitchAccountModal('Staff'); app.closeMobileMenu();" class="py-1.5 px-2 bg-slate-100 hover:bg-blue-50 rounded-lg text-xs font-medium text-slate-700 text-center">
-              💼 Staff
-            </button>
-            <button onclick="app.openSwitchAccountModal('End User'); app.closeMobileMenu();" class="py-1.5 px-2 bg-slate-100 hover:bg-blue-50 rounded-lg text-xs font-medium text-slate-700 text-center">
-              👤 User
-            </button>
-          </div>
+          <button onclick="app.openSwitchAccountModal(); app.closeMobileMenu();" class="w-full py-1.5 px-2 bg-slate-100 hover:bg-blue-50 rounded-lg text-xs font-medium text-slate-700 text-center">↔ Sign in to another account</button>
         </div>
 
         <!-- User Info & Auth (Mobile) -->
@@ -341,27 +313,7 @@
               </div>
             </div>
 
-            <!-- Quick Credentials Selection -->
-            <div class="bg-slate-50/90 border border-slate-200 rounded-xl p-3.5 space-y-2">
-              <div class="flex items-center justify-between">
-                <span class="text-[11px] font-semibold text-slate-600 uppercase tracking-wide">Quick Fill Account:</span>
-                <span class="text-[10px] text-blue-600 font-medium">Select to fill credentials</span>
-              </div>
-              <div class="grid grid-cols-3 gap-2">
-                <button type="button" onclick="app.fillLoginCredentials('Administrator')" class="py-2 px-2 bg-white hover:bg-blue-50 hover:border-blue-300 border border-slate-200 rounded-lg text-xs font-semibold text-slate-800 shadow-sm transition text-center flex flex-col items-center cursor-pointer">
-                  <span class="text-sm">👑</span>
-                  <span class="mt-0.5">Admin</span>
-                </button>
-                <button type="button" onclick="app.fillLoginCredentials('Staff')" class="py-2 px-2 bg-white hover:bg-blue-50 hover:border-blue-300 border border-slate-200 rounded-lg text-xs font-semibold text-slate-800 shadow-sm transition text-center flex flex-col items-center cursor-pointer">
-                  <span class="text-sm">💼</span>
-                  <span class="mt-0.5">Staff</span>
-                </button>
-                <button type="button" onclick="app.fillLoginCredentials('End User')" class="py-2 px-2 bg-white hover:bg-blue-50 hover:border-blue-300 border border-slate-200 rounded-lg text-xs font-semibold text-slate-800 shadow-sm transition text-center flex flex-col items-center cursor-pointer">
-                  <span class="text-sm">👤</span>
-                  <span class="mt-0.5">User</span>
-                </button>
-              </div>
-            </div>
+            <p class="rounded-xl border border-slate-200 bg-slate-50 p-3 text-xs text-slate-600">Use your individual account credentials. New accounts begin as End Users; Staff access requires administrator approval.</p>
 
             <!-- Sign in with Google Option (Requested by user) -->
             <div class="space-y-3">
@@ -396,19 +348,12 @@
                 <input type="text" id="landingName" placeholder="e.g. Alex Morgan" class="w-full text-xs border border-slate-300 rounded-xl px-3.5 py-2.5 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 bg-white">
               </div>
 
-              <!-- Role Selector (Register Only) -->
-              <div id="landingRoleGroup" class="hidden">
-                <label class="block text-xs font-semibold text-slate-700 mb-1">Account Role</label>
-                <select id="landingRole" class="w-full text-xs border border-slate-300 rounded-xl px-3.5 py-2.5 bg-white focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500">
-                  <option value="End User">End User (Send &amp; Receive Files)</option>
-                  <option value="Staff">Staff (Organizational File Transfer)</option>
-                </select>
-              </div>
+              <p id="landingRoleGroup" class="hidden text-xs text-slate-500 rounded-lg bg-slate-50 border border-slate-200 p-3">New accounts start as End Users. You can request Staff access after signing in.</p>
 
               <!-- Email (supports Gmail or any email) -->
               <div>
                 <label class="block text-xs font-semibold text-slate-700 mb-1">Email or Gmail Address</label>
-                <input type="email" id="landingEmail" required placeholder="alex.morgan@gmail.com" class="w-full text-xs border border-slate-300 rounded-xl px-3.5 py-2.5 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 bg-white">
+                <input type="email" id="landingEmail" required placeholder="you@example.com" class="w-full text-xs border border-slate-300 rounded-xl px-3.5 py-2.5 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 bg-white">
               </div>
 
               <!-- Password -->
@@ -740,6 +685,34 @@
       </div>
     </section>
 
+    <!-- ================= STAFF ACCESS REQUEST (END USER ONLY) ================= -->
+    <section id="view-staff-request" class="view-content hidden max-w-3xl mx-auto space-y-6">
+      <div>
+        <h1 class="text-2xl font-bold text-slate-900">Request Staff Access</h1>
+        <p class="text-sm text-slate-500 mt-1">Submit your organizational details for administrator verification. An employee or student ID alone is not proof of identity.</p>
+      </div>
+      <div id="staffRequestStatus"></div>
+      <form onsubmit="staffPortal.submitRequest(event)" class="glass-card p-6 space-y-4">
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <label class="text-xs font-semibold text-slate-700">Employee / Student ID<input name="employeeId" required maxlength="100" class="mt-1.5 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm"></label>
+          <label class="text-xs font-semibold text-slate-700">Department<input name="department" required maxlength="100" class="mt-1.5 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm"></label>
+          <label class="text-xs font-semibold text-slate-700 sm:col-span-2">Designation<input name="designation" required maxlength="100" class="mt-1.5 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm"></label>
+        </div>
+        <label class="block text-xs font-semibold text-slate-700">Reason for requesting Staff access<textarea name="reason" required maxlength="1000" rows="5" class="mt-1.5 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm"></textarea></label>
+        <button type="submit" class="px-5 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-sm font-semibold">Submit Request</button>
+      </form>
+    </section>
+
+    <!-- ================= STAFF MONITOR (STAFF ONLY) ================= -->
+    <section id="view-monitor" class="view-content hidden space-y-6">
+      <div class="flex items-center justify-between gap-3">
+        <div><h1 class="text-2xl font-bold text-slate-900">Staff Security Monitor</h1><p class="text-sm text-slate-500 mt-1">Read-only, redacted operational telemetry. Private file names, contents, user emails, and IP addresses are not shown.</p></div>
+        <button onclick="staffPortal.loadMonitor()" class="px-3 py-2 rounded-lg border border-slate-300 bg-white text-xs font-semibold text-slate-700">Refresh</button>
+      </div>
+      <div class="glass-card overflow-hidden"><div class="p-4 border-b border-slate-200 font-bold text-sm">Security Alerts</div><div class="overflow-x-auto"><table class="w-full text-left text-xs"><thead class="bg-slate-100 text-slate-600"><tr><th class="px-4 py-3">Type</th><th class="px-4 py-3">Severity</th><th class="px-4 py-3">Status</th><th class="px-4 py-3">Time</th></tr></thead><tbody id="staffMonitorAlerts"></tbody></table></div></div>
+      <div class="glass-card overflow-hidden"><div class="p-4 border-b border-slate-200 font-bold text-sm">System Activity</div><div class="overflow-x-auto"><table class="w-full text-left text-xs"><thead class="bg-slate-100 text-slate-600"><tr><th class="px-4 py-3">Time</th><th class="px-4 py-3">Action</th><th class="px-4 py-3">Severity</th></tr></thead><tbody id="staffMonitorLogs"></tbody></table></div></div>
+    </section>
+
     <!-- ================= VIEW 3: THREAT CENTER & ADMIN DASHBOARD ================= -->
     <section id="view-admin" class="view-content hidden space-y-6">
       
@@ -919,6 +892,12 @@
 
       </div>
 
+      <!-- Staff Access Requests -->
+      <div class="glass-card overflow-hidden">
+        <div class="p-4 border-b border-slate-200/80 bg-slate-50/50 flex items-center justify-between"><div><h3 class="font-bold text-sm text-slate-900">Staff Access Requests</h3><p class="text-xs text-slate-500">Verify organizational details before approving a promotion.</p></div><button onclick="adminDashboard.loadStaffRequests()" class="text-xs font-semibold text-blue-600">Refresh</button></div>
+        <div class="overflow-x-auto"><table class="w-full text-left text-xs"><thead class="bg-slate-100/70 text-slate-600 uppercase font-semibold"><tr><th class="px-5 py-3">Applicant</th><th class="px-5 py-3">ID</th><th class="px-5 py-3">Department</th><th class="px-5 py-3">Designation</th><th class="px-5 py-3">Reason</th><th class="px-5 py-3">Requested</th><th class="px-5 py-3">Decision</th></tr></thead><tbody id="staffRequestsTableBody" class="text-slate-700"><tr><td colspan="7" class="px-5 py-6 text-center text-slate-400">Loading requests...</td></tr></tbody></table></div>
+      </div>
+
       <!-- User Management Table -->
       <div class="glass-card overflow-hidden">
         <div class="p-4 border-b border-slate-200/80 bg-slate-50/50 flex items-center justify-between">
@@ -1070,43 +1049,10 @@
         <span class="font-bold text-slate-800 text-sm">Sign in with Google</span>
       </div>
 
-      <h3 class="text-lg font-bold text-slate-900 leading-snug">Choose an account</h3>
-      <p class="text-xs text-slate-500 mt-0.5 mb-4">to continue to <span class="font-semibold text-blue-600">CipherDrop Secure Transfer</span></p>
-
-      <!-- Account list -->
-      <div class="space-y-2 mb-4">
-        <!-- Account 1: Sai Nikhil -->
-        <button onclick="app.authenticateWithGoogle('sainikhil@gmail.com', 'Sai Nikhil')" class="w-full flex items-center justify-between p-3 rounded-2xl hover:bg-blue-50/60 border border-slate-200 hover:border-blue-200 transition text-left group">
-          <div class="flex items-center space-x-3">
-            <div class="w-9 h-9 rounded-full bg-blue-600 text-white font-bold flex items-center justify-center text-sm shadow-sm flex-shrink-0">
-              S
-            </div>
-            <div>
-              <div class="text-xs font-bold text-slate-900 group-hover:text-blue-600 transition-colors">Sai Nikhil</div>
-              <div class="text-[11px] text-slate-500 font-mono">sainikhil@gmail.com</div>
-            </div>
-          </div>
-          <span class="text-xs text-blue-600 font-semibold group-hover:translate-x-0.5 transition-transform">Continue →</span>
-        </button>
-
-        <!-- Account 2: Standard Google User -->
-        <button onclick="app.authenticateWithGoogle('alex.morgan@gmail.com', 'Alex Morgan')" class="w-full flex items-center justify-between p-3 rounded-2xl hover:bg-blue-50/60 border border-slate-200 hover:border-blue-200 transition text-left group">
-          <div class="flex items-center space-x-3">
-            <div class="w-9 h-9 rounded-full bg-emerald-600 text-white font-bold flex items-center justify-center text-sm shadow-sm flex-shrink-0">
-              A
-            </div>
-            <div>
-              <div class="text-xs font-bold text-slate-900 group-hover:text-blue-600 transition-colors">Alex Morgan</div>
-              <div class="text-[11px] text-slate-500 font-mono">alex.morgan@gmail.com</div>
-            </div>
-          </div>
-          <span class="text-xs text-blue-600 font-semibold group-hover:translate-x-0.5 transition-transform">Continue →</span>
-        </button>
-      </div>
-
       <!-- Use Custom Gmail Account -->
-      <div class="pt-3 border-t border-slate-100">
-        <div class="text-xs font-semibold text-slate-700 mb-2">Or sign in with any Google / Gmail account:</div>
+      <div class="pt-3">
+        <h3 class="text-lg font-bold text-slate-900 leading-snug">Use your Google account</h3>
+        <p class="text-xs text-slate-500 mt-0.5 mb-4">Enter the Gmail address you want to use with CipherDrop.</p>
         <form onsubmit="app.handleCustomGoogleAuth(event)" class="space-y-2.5">
           <div>
             <input type="email" id="customGoogleEmail" required placeholder="yourname@gmail.com" class="w-full text-xs border border-slate-300 rounded-xl px-3.5 py-2.5 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 bg-white">
@@ -1158,7 +1104,7 @@
       <form id="switchAccountForm" onsubmit="app.handleSwitchAccountSubmit(event)" class="space-y-3.5 mt-3">
         <div>
           <label class="block text-xs font-semibold text-slate-700 mb-1">Account Email / Gmail</label>
-          <input type="email" id="switchAccountEmail" required placeholder="user@securetransfer.local" class="w-full text-xs border border-slate-300 rounded-xl px-3.5 py-2.5 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 bg-white">
+          <input type="email" id="switchAccountEmail" required placeholder="you@example.com" class="w-full text-xs border border-slate-300 rounded-xl px-3.5 py-2.5 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 bg-white">
         </div>
 
         <div>
@@ -1168,7 +1114,7 @@
 
         <!-- Quick Demo Hint -->
         <div id="switchAccountHint" class="bg-slate-50 border border-slate-200 rounded-xl p-2.5 text-[11px] text-slate-500 flex items-center justify-between">
-          <span>Standard Pass: <strong class="text-slate-800 font-mono" id="switchAccountHintPass">Admin@12345</strong></span>
+          <span>Enter the password for this account.</span>
           <button type="button" onclick="app.fillSwitchAccountPassword()" class="text-blue-600 font-semibold hover:underline text-[10px]">Auto Fill</button>
         </div>
 
@@ -1217,6 +1163,7 @@
   <script src="/js/api.js"></script>
   <script src="/js/upload.js"></script>
   <script src="/js/transfers.js"></script>
+  <script src="/js/staff.js"></script>
   <script src="/js/dashboard.js"></script>
   <script src="/js/app.js"></script>
 </body>

@@ -8,6 +8,7 @@ const User = require('../models/User');
 const FileRecord = require('../models/FileRecord');
 const ShareRecord = require('../models/ShareRecord');
 const SecurityPolicy = require('../models/SecurityPolicy');
+const StaffAccessRequest = require('../models/StaffAccessRequest');
 const threatMonitor = require('../services/threatMonitor');
 const cryptoEngine = require('../services/cryptoEngine');
 const config = require('../config');
@@ -268,17 +269,82 @@ router.delete('/users/:userId', async (req, res) => {
 router.post('/users/role/:userId', async (req, res) => {
   try {
     const { role } = req.body;
-    if (!['Administrator', 'Staff', 'End User'].includes(role)) {
-      return res.status(400).json({ success: false, message: 'Invalid role' });
+    if (role !== 'End User') {
+      return res.status(400).json({ success: false, message: 'Staff promotion requires an approved Staff access request.' });
     }
 
     const user = await User.findById(req.params.userId);
     if (!user) return res.status(404).json({ success: false, message: 'User not found' });
+    if (user.role !== 'Staff') {
+      return res.status(400).json({ success: false, message: 'Only an existing Staff role can be revoked through this endpoint.' });
+    }
 
     user.role = role;
     await user.save();
 
+    await threatMonitor.logActivity({
+      userId: req.user.id,
+      userEmail: req.user.email,
+      action: 'STAFF_ACCESS_REVOKED',
+      severity: 'warning',
+      details: { affectedUser: user.email }
+    });
+
     res.json({ success: true, message: `User role updated to ${role}.` });
+  } catch (err) {
+    res.status(500).json({ success: false, message: err.message });
+  }
+});
+
+/**
+ * Staff access requests are reviewable only by an Administrator.
+ */
+router.get('/staff-requests', async (req, res) => {
+  try {
+    const { status = 'Pending' } = req.query;
+    const query = status === 'all' ? {} : { status };
+    const requests = await StaffAccessRequest.find(query).sort({ createdAt: -1 });
+    res.json({ success: true, requests });
+  } catch (err) {
+    res.status(500).json({ success: false, message: err.message });
+  }
+});
+
+router.post('/staff-requests/:requestId/decision', async (req, res) => {
+  try {
+    const { decision, reviewNote = '' } = req.body;
+    if (!['Approved', 'Rejected'].includes(decision)) {
+      return res.status(400).json({ success: false, message: 'Decision must be Approved or Rejected.' });
+    }
+
+    const request = await StaffAccessRequest.findOne({ requestId: req.params.requestId, status: 'Pending' });
+    if (!request) {
+      return res.status(404).json({ success: false, message: 'Pending Staff access request not found.' });
+    }
+
+    const user = await User.findById(request.userId);
+    if (!user) return res.status(404).json({ success: false, message: 'Requesting user no longer exists.' });
+
+    request.status = decision;
+    request.reviewedBy = req.user.email;
+    request.reviewNote = typeof reviewNote === 'string' ? reviewNote.trim().slice(0, 1000) : '';
+    request.reviewedAt = new Date();
+
+    if (decision === 'Approved') {
+      user.role = 'Staff';
+      await user.save();
+    }
+    await request.save();
+
+    await threatMonitor.logActivity({
+      userId: req.user.id,
+      userEmail: req.user.email,
+      action: decision === 'Approved' ? 'STAFF_ACCESS_APPROVED' : 'STAFF_ACCESS_REJECTED',
+      severity: 'info',
+      details: { requestId: request.requestId, applicantEmail: request.email, reviewNote: request.reviewNote }
+    });
+
+    res.json({ success: true, request, message: `Staff access request ${decision.toLowerCase()}.` });
   } catch (err) {
     res.status(500).json({ success: false, message: err.message });
   }

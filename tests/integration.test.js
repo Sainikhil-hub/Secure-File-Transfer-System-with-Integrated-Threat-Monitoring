@@ -8,6 +8,7 @@ const path = require('path');
 
 // Demo users are intentionally opt-in; the integration suite needs them locally.
 process.env.SEED_DEMO_USERS = 'true';
+process.env.STORAGE_PROVIDER = 'local';
 
 const PORT = 5000;
 const BASE_URL = `http://localhost:${PORT}`;
@@ -92,9 +93,11 @@ async function runIntegrationTests() {
       name: 'Brute Force Test Subject',
       email: testEmail,
       password: 'CorrectPassword123!',
-      role: 'End User'
+      // A public caller must not be able to self-assign Staff privileges.
+      role: 'Staff'
     });
     assert.strictEqual(regRes.status, 201);
+    assert.strictEqual(regRes.data.user.role, 'End User');
 
     // Now fail 5 times consecutively
     let lastRes;
@@ -123,6 +126,8 @@ async function runIntegrationTests() {
     console.log('\n5. Verifying Role-Based Access Control (REQ-14)...');
     const forbiddenRes = await makeRequest('GET', '/api/admin/metrics', null, userToken);
     assert.strictEqual(forbiddenRes.status, 403, 'End User must be blocked with 403 Forbidden on admin routes');
+    const staffForbiddenRes = await makeRequest('GET', '/api/admin/metrics', null, staffToken);
+    assert.strictEqual(staffForbiddenRes.status, 403, 'Staff must be blocked with 403 Forbidden on admin routes');
     console.log('   ✅ REQ-14 Access Control verified: End User blocked from Admin API.');
 
     // 6. REQ-13: Mark alert as reviewed or resolved
